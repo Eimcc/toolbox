@@ -7,6 +7,10 @@ function drawDesktopBackground() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
+    // 先绘制一个淡蓝色背景作为备用
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     // 加载并绘制背景图片
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -20,6 +24,18 @@ function drawDesktopBackground() {
         
         // 绘制背景图片
         ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+    };
+    
+    img.onerror = () => {
+        // 如果图片加载失败，绘制一个简单的海绵宝宝主题背景
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制一些简单的海绵宝宝元素
+        ctx.fillStyle = '#FF6347';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('海绵宝宝主题桌面', canvas.width / 2, canvas.height / 2);
     };
     
     // 使用海绵宝宝主题的背景图片
