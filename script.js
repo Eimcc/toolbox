@@ -1454,5 +1454,20 @@ function init() {
     initEventListeners();
 }
 
+// 更新时钟
+function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    let minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? '下午' : '上午';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    document.getElementById('clock').textContent = `${ampm} ${hours}:${minutes}`;
+}
+
 // 页面加载完成后初始化
-window.addEventListener('load', init);
+window.addEventListener('load', () => {
+    init();
+    updateClock();
+    setInterval(updateClock, 1000);
+});
