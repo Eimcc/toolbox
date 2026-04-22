@@ -1,4 +1,4 @@
-// 绘制桌面背景：狐狸在电脑前办公
+// 绘制桌面背景：使用海绵宝宝图片
 function drawDesktopBackground() {
     const canvas = document.getElementById('desktopCanvas');
     const ctx = canvas.getContext('2d');
@@ -7,19 +7,23 @@ function drawDesktopBackground() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    // 纯色背景
-    ctx.fillStyle = '#008080';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 加载并绘制背景图片
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        // 计算缩放比例保持图片比例
+        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const offsetX = (canvas.width - scaledWidth) / 2;
+        const offsetY = (canvas.height - scaledHeight) / 2;
+        
+        // 绘制背景图片
+        ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+    };
     
-    // 计算中心位置
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    // 绘制狐狸
-    drawFox(ctx, centerX, centerY);
-    
-    // 绘制电脑
-    drawComputer(ctx, centerX, centerY + 60);
+    // 使用海绵宝宝主题的背景图片
+    img.src = 'https://trae-api-cn.mchost.guru/api/ide/v1/text-to-image?prompt=SpongeBob%20SquarePants%20and%20friends%20colorful%20cheerful%20desktop%20wallpaper%20high%20quality&image_size=landscape_16_9';
 }
 
 // 绘制狐狸
