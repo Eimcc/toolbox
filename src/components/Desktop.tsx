@@ -48,11 +48,22 @@ export const Desktop: React.FC<DesktopProps> = ({ onToolOpen }) => {
     <div className="relative w-full h-screen overflow-hidden">
       {/* Desktop Background */}
       <div 
-        className="absolute inset-0 bg-cover bg-center" 
-        style={{
-          backgroundImage: `url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cartoon%20fish%20characters%20with%20positive%20message%20%22Good%20Mindset%20Good%20Mood%20Good%20Health%20Good%20Luck%22%20on%20light%20background&image_size=landscape_16_9')`
-        }}
-      />
+        className="absolute inset-0 bg-yellow-50"
+      >
+        {/* Background Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">心态好 情绪好 身体好 运气就好</h1>
+            <p className="text-gray-600 mb-8">Good Mindset Good Mood Good Health Good Luck</p>
+            <div className="flex justify-center space-x-4">
+              <div className="w-16 h-16 bg-blue-400 rounded-full flex items-center justify-center">🐟</div>
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center">🐠</div>
+              <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center">🐡</div>
+              <div className="w-16 h-16 bg-purple-400 rounded-full flex items-center justify-center">🦈</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Desktop Icons */}
       <div className="absolute top-10 left-10 flex flex-col space-y-8 z-10">
