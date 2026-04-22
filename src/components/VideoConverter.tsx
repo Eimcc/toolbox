@@ -92,12 +92,20 @@ export const VideoConverter: React.FC<VideoConverterProps> = ({
           <div className="w-4 h-4 bg-green-400 rounded-full"></div>
           <span className="text-sm font-bold">视频格式转换</span>
         </div>
-        <button
-          onClick={onClose}
-          className="bg-gray-300 text-black w-6 h-6 flex items-center justify-center rounded hover:bg-gray-400"
-        >
-          ×
-        </button>
+        <div className="flex space-x-1">
+          <button
+            onClick={onClose}
+            className="bg-gray-300 text-black w-6 h-6 flex items-center justify-center rounded hover:bg-gray-400"
+          >
+            _
+          </button>
+          <button
+            onClick={onClose}
+            className="bg-gray-300 text-black w-6 h-6 flex items-center justify-center rounded hover:bg-gray-400"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {/* Window Content */}
