@@ -13,7 +13,7 @@ body {
     height: 100vh;
     position: relative;
     background-color: #008080;
-    background-image: url('https://trae-api-cn.mchost.guru/api/ide/v1/text-to-image?prompt=SpongeBob%20SquarePants%20and%20friends%20colorful%20cheerful%20desktop%20wallpaper%20high%20quality&image_size=landscape_16_9');
+    background-image: url('https://img.freepik.com/free-vector/spongebob-squarepants-characters-cartoon-style_1308-128322.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
