@@ -156,21 +156,6 @@
             --before-opacity: 1;
         }
 
-        .upload-file-area::before {
-            content: 'div div';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 36px;
-            color: rgba(128, 128, 128, 0.5);
-            font-weight: bold;
-            pointer-events: none;
-            opacity: var(--before-opacity);
-            transition: opacity 0.5s ease;
-            z-index: 0;
-        }
-
         .upload-file-area:hover {
             background-color: #f0f0f0;
         }
@@ -968,8 +953,6 @@
                 setTimeout(() => {
                     imageUploadIcon.style.opacity = '0';
                     imageUploadText.style.opacity = '0';
-                    // 隐藏背景文字
-                    imageUploadArea.style.setProperty('--before-opacity', '0');
                     setTimeout(() => {
                         imageUploadIcon.style.display = 'none';
                         imageUploadText.style.display = 'none';
@@ -978,8 +961,6 @@
             } else {
                 imageUploadIcon.style.display = 'block';
                 imageUploadText.style.display = 'block';
-                // 显示背景文字
-                imageUploadArea.style.setProperty('--before-opacity', '1');
                 setTimeout(() => {
                     imageUploadIcon.style.opacity = '1';
                     imageUploadText.style.opacity = '1';
@@ -1064,8 +1045,6 @@
                 setTimeout(() => {
                     videoUploadIcon.style.opacity = '0';
                     videoUploadText.style.opacity = '0';
-                    // 隐藏背景文字
-                    videoUploadArea.style.setProperty('--before-opacity', '0');
                     setTimeout(() => {
                         videoUploadIcon.style.display = 'none';
                         videoUploadText.style.display = 'none';
@@ -1074,8 +1053,6 @@
             } else {
                 videoUploadIcon.style.display = 'block';
                 videoUploadText.style.display = 'block';
-                // 显示背景文字
-                videoUploadArea.style.setProperty('--before-opacity', '1');
                 setTimeout(() => {
                     videoUploadIcon.style.opacity = '1';
                     videoUploadText.style.opacity = '1';
