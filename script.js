@@ -201,7 +201,7 @@ function initEventListeners() {
     });
 
     imageUploadArea.addEventListener('click', () => {
-        if (!imageIsConverting) {
+        if (!imageIsConverting && imageSelectedFiles.length === 0) {
             imageFileInput.click();
         }
     });
@@ -229,7 +229,7 @@ function initEventListeners() {
     });
 
     videoUploadArea.addEventListener('click', () => {
-        if (!videoIsConverting) {
+        if (!videoIsConverting && videoSelectedFiles.length === 0) {
             videoFileInput.click();
         }
     });
@@ -257,7 +257,7 @@ function initEventListeners() {
     });
 
     audioUploadArea.addEventListener('click', () => {
-        if (!audioIsConverting) {
+        if (!audioIsConverting && audioSelectedFiles.length === 0) {
             audioFileInput.click();
         }
     });
