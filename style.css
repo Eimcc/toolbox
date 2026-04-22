@@ -13,7 +13,7 @@ body {
     height: 100vh;
     position: relative;
     background-color: #008080;
-    background-image: url('https://img.freepik.com/free-vector/spongebob-squarepants-characters-cartoon-style_1308-128322.jpg');
+    background-image: url('background.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
