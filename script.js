@@ -1230,8 +1230,11 @@ function downloadAllImages() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showImageStatus(`已下载 ${imageConvertedFiles.length} 张图片`, 'success');
@@ -1252,8 +1255,11 @@ function downloadAllVideos() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showVideoStatus(`已下载 ${videoConvertedFiles.length} 个视频`, 'success');
@@ -1274,8 +1280,11 @@ function downloadAllAudios() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showAudioStatus(`已下载 ${audioConvertedFiles.length} 个音频`, 'success');
