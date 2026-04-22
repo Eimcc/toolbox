@@ -132,6 +132,44 @@ function initWindowControls() {
             audioConverterWindow.classList.remove('active');
         }
     });
+
+    // 添加窗口拖动功能
+    const windows = [
+        { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar') },
+        { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar') },
+        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar') }
+    ];
+
+    windows.forEach(({ window, titlebar }) => {
+        if (titlebar) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            titlebar.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = parseInt(window.style.left || '50%');
+                initialTop = parseInt(window.style.top || '50%');
+                window.style.zIndex = '100'; // 确保当前窗口在最前面
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                window.style.left = `${initialLeft + deltaX}px`;
+                window.style.top = `${initialTop + deltaY}px`;
+                window.style.transform = 'none'; // 覆盖默认的transform
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+    });
 }
 
 // 初始化事件监听

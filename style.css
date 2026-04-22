@@ -76,7 +76,6 @@ body {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
     width: 700px;
     height: 550px;
     background-color: #c0c0c0;
@@ -85,6 +84,7 @@ body {
     font-size: 12px;
     z-index: 10;
     display: none;
+    transform: translate(-50%, -50%);
 }
 
 .window.active {
