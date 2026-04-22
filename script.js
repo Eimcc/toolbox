@@ -1,4 +1,4 @@
-// 绘制桌面背景：使用海绵宝宝图片
+// 绘制桌面背景：使用用户提供的图片
 function drawDesktopBackground() {
     const canvas = document.getElementById('desktopCanvas');
     const ctx = canvas.getContext('2d');
@@ -7,39 +7,8 @@ function drawDesktopBackground() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    // 先绘制一个淡蓝色背景作为备用
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 加载并绘制背景图片
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-        // 计算缩放比例保持图片比例
-        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-        const scaledWidth = img.width * scale;
-        const scaledHeight = img.height * scale;
-        const offsetX = (canvas.width - scaledWidth) / 2;
-        const offsetY = (canvas.height - scaledHeight) / 2;
-        
-        // 绘制背景图片
-        ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
-    };
-    
-    img.onerror = () => {
-        // 如果图片加载失败，绘制一个简单的海绵宝宝主题背景
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 绘制一些简单的海绵宝宝元素
-        ctx.fillStyle = '#FF6347';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('海绵宝宝主题桌面', canvas.width / 2, canvas.height / 2);
-    };
-    
-    // 使用海绵宝宝主题的背景图片
-    img.src = 'https://trae-api-cn.mchost.guru/api/ide/v1/text-to-image?prompt=SpongeBob%20SquarePants%20and%20friends%20colorful%20cheerful%20desktop%20wallpaper%20high%20quality&image_size=landscape_16_9';
+    // 清空Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // 绘制狐狸
