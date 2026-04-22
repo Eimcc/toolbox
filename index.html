@@ -142,20 +142,20 @@
             margin-bottom: 4px;
         }
 
-        /* 上传区域 */
-        .upload-area {
+        /* 上传文件区域 */
+        .upload-file-area {
             border: 2px dashed #808080;
             background-color: #ffffff;
             padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 300px;
         }
 
-        .upload-area:hover {
+        .upload-file-area:hover {
             border-color: #000080;
             background-color: #f0f0f0;
         }
@@ -169,14 +169,17 @@
         .upload-text {
             color: #808080;
             text-align: center;
+            margin-bottom: 16px;
         }
 
         /* 文件列表 */
         .file-list {
+            width: 100%;
             flex: 1;
             background-color: #ffffff;
             border: 1px inset #ffffff;
             overflow-y: auto;
+            margin-top: 16px;
         }
 
         .file-item {
@@ -231,6 +234,23 @@
 
         .file-remove:hover {
             background-color: #cc0000;
+        }
+
+        /* 文件项进度条 */
+        .file-progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border: 1px inset #ffffff;
+            height: 8px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .file-progress-bar {
+            height: 100%;
+            background-color: #008000;
+            width: 0%;
+            transition: width 0.2s ease;
         }
 
         /* 格式选择区域 */
@@ -302,6 +322,7 @@
             text-align: center;
             color: #000080;
             font-weight: bold;
+            margin-top: -10px;
         }
 
         /* 进度条 */
@@ -344,13 +365,12 @@
             <div class="window-content">
                 <div class="title">选择多张图片进行批量格式转换 (支持HEIC)</div>
                 
-                <div class="upload-area" id="uploadArea">
+                <div class="upload-file-area" id="uploadFileArea">
                     <input type="file" id="fileInput" accept="image/*,.heic" style="display: none;" multiple>
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">点击或拖拽多张图片到此处<br>支持批量选择和批量转换<br>支持HEIC、JPG、PNG、WebP、GIF格式</div>
+                    <div class="upload-icon" id="uploadIcon">📁</div>
+                    <div class="upload-text" id="uploadText">点击或拖拽多张图片到此处<br>支持批量选择和批量转换<br>支持HEIC、JPG、PNG、WebP、GIF格式</div>
+                    <div class="file-list" id="fileList"></div>
                 </div>
-                
-                <div class="file-list" id="fileList"></div>
                 
                 <div class="progress-container" id="progressContainer">
                     <div class="progress-bar" id="progressBar"></div>
@@ -369,8 +389,8 @@
                 </div>
                 
                 <div class="button-area">
-                    <button class="button" id="convertButton" disabled>批量转换</button>
-                    <button class="button" id="downloadButton" disabled>批量下载</button>
+                    <button class="button" id="convertButton" disabled>转换</button>
+                    <button class="button" id="downloadButton" disabled>下载</button>
                     <button class="button" id="resetButton">清空</button>
                 </div>
                 
@@ -543,7 +563,9 @@
         const converterWindow = document.getElementById('converterWindow');
         const closeButton = document.getElementById('closeButton');
         const minimizeButton = document.getElementById('minimizeButton');
-        const uploadArea = document.getElementById('uploadArea');
+        const uploadFileArea = document.getElementById('uploadFileArea');
+        const uploadIcon = document.getElementById('uploadIcon');
+        const uploadText = document.getElementById('uploadText');
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
         const targetFormat = document.getElementById('targetFormat');
@@ -579,7 +601,7 @@
         // 初始化事件监听
         function initEventListeners() {
             // 上传区域点击
-            uploadArea.addEventListener('click', () => {
+            uploadFileArea.addEventListener('click', () => {
                 if (!isConverting) {
                     fileInput.click();
                 }
@@ -589,20 +611,20 @@
             fileInput.addEventListener('change', handleFileSelect);
 
             // 拖放事件
-            uploadArea.addEventListener('dragover', (e) => {
+            uploadFileArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 if (!isConverting) {
-                    uploadArea.style.borderColor = '#000080';
+                    uploadFileArea.style.borderColor = '#000080';
                 }
             });
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.borderColor = '#808080';
+            uploadFileArea.addEventListener('dragleave', () => {
+                uploadFileArea.style.borderColor = '#808080';
             });
 
-            uploadArea.addEventListener('drop', (e) => {
+            uploadFileArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                uploadArea.style.borderColor = '#808080';
+                uploadFileArea.style.borderColor = '#808080';
                 if (!isConverting && e.dataTransfer.files.length > 0) {
                     handleFiles(Array.from(e.dataTransfer.files));
                 }
@@ -653,6 +675,30 @@
             showStatus(`已加载 ${validFiles.length} 张图片，共 ${selectedFiles.length} 张`, 'success');
         }
 
+        // 生成文件预览
+        async function generateFilePreview(file) {
+            try {
+                let previewSrc;
+                const fileName = file.name.toLowerCase();
+                
+                // 处理HEIC文件预览
+                if (fileName.endsWith('.heic')) {
+                    const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.3 });
+                    previewSrc = URL.createObjectURL(convertedBlob);
+                } else {
+                    const reader = new FileReader();
+                    previewSrc = await new Promise((resolve, reject) => {
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                }
+                return previewSrc;
+            } catch (error) {
+                return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZDRkNGRhIi8+PHRleHQgeD0iMjAiIHk9IjI1IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2Ij7DpzwvdGV4dD48L3N2Zz4=';
+            }
+        }
+
         // 更新文件列表
         async function updateFileList() {
             fileList.innerHTML = '';
@@ -665,26 +711,9 @@
                 const preview = document.createElement('img');
                 preview.className = 'file-preview';
                 
-                try {
-                    let previewSrc;
-                    const fileName = item.file.name.toLowerCase();
-                    
-                    // 处理HEIC文件预览
-                    if (fileName.endsWith('.heic')) {
-                        const convertedBlob = await heic2any({ blob: item.file, toType: 'image/jpeg', quality: 0.3 });
-                        previewSrc = URL.createObjectURL(convertedBlob);
-                    } else {
-                        const reader = new FileReader();
-                        previewSrc = await new Promise((resolve, reject) => {
-                            reader.onload = (e) => resolve(e.target.result);
-                            reader.onerror = reject;
-                            reader.readAsDataURL(item.file);
-                        });
-                    }
-                    preview.src = previewSrc;
-                } catch (error) {
-                    preview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZDRkNGRhIi8+PHRleHQgeD0iMjAiIHk9IjI1IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2Ij7DpzwvdGV4dD48L3N2Zz4=';
-                }
+                // 生成预览
+                const previewSrc = await generateFilePreview(item.file);
+                preview.src = previewSrc;
 
                 const fileInfo = document.createElement('div');
                 fileInfo.className = 'file-info';
@@ -707,8 +736,26 @@
                     fileStatus.textContent = '转换失败';
                 }
 
+                // 添加文件项进度条
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'file-progress-container';
+                progressContainer.id = 'progress-' + item.id;
+                const progressBar = document.createElement('div');
+                progressBar.className = 'file-progress-bar';
+                progressBar.id = 'progressbar-' + item.id;
+                progressContainer.appendChild(progressBar);
+
+                // 如果正在转换或刚完成，显示进度条
+                if (item.status === 'converting' || item.status === 'success') {
+                    progressContainer.style.display = 'block';
+                    if (item.status === 'success') {
+                        progressBar.style.width = '100%';
+                    }
+                }
+
                 fileInfo.appendChild(fileName);
                 fileInfo.appendChild(fileStatus);
+                fileInfo.appendChild(progressContainer);
 
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'file-remove';
@@ -723,7 +770,14 @@
             }
 
             convertButton.disabled = selectedFiles.length === 0;
-            uploadArea.style.display = selectedFiles.length > 0 ? 'none' : 'flex';
+            // 显示或隐藏上传图标和文本
+            if (selectedFiles.length > 0) {
+                uploadIcon.style.display = 'none';
+                uploadText.style.display = 'none';
+            } else {
+                uploadIcon.style.display = 'block';
+                uploadText.style.display = 'block';
+            }
         }
 
         // 移除文件
@@ -754,16 +808,20 @@
             let successCount = 0;
             let failCount = 0;
 
+            // 先更新一次文件列表，显示所有文件为转换中状态
+            selectedFiles.forEach(item => {
+                item.status = 'converting';
+            });
+            updateFileList();
+
             for (let i = 0; i < selectedFiles.length; i++) {
                 const item = selectedFiles[i];
-                item.status = 'converting';
-                updateFileList();
                 
                 showStatus(`正在转换 ${i + 1}/${selectedFiles.length}...`, 'info');
                 progressBar.style.width = `${(i / selectedFiles.length) * 100}%`;
 
                 try {
-                    const blob = await convertSingleImage(item.file, targetExt);
+                    const blob = await convertSingleImage(item.file, targetExt, item.id);
                     item.convertedBlob = blob;
                     item.status = 'success';
                     convertedFiles.push(item);
@@ -773,7 +831,8 @@
                     failCount++;
                 }
                 
-                updateFileList();
+                // 只更新当前文件的状态，而不是整个列表
+                updateSingleFileStatus(item);
             }
 
             progressBar.style.width = '100%';
@@ -790,38 +849,116 @@
         }
 
         // 转换单张图片
-        async function convertSingleImage(file, targetExt) {
+        async function convertSingleImage(file, targetExt, itemId) {
             try {
                 const fileName = file.name.toLowerCase();
-                let imageBlob = file;
+                const progressBar = document.getElementById('progressbar-' + itemId);
+                const progressContainer = document.getElementById('progress-' + itemId);
                 
-                // 如果是HEIC文件，先转换
-                if (fileName.endsWith('.heic')) {
-                    imageBlob = await heic2any({ blob: file, toType: 'image/png' });
+                // 显示进度条
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
                 }
                 
-                return new Promise((resolve, reject) => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const img = new Image();
+                // 更新进度到25%
+                if (progressBar) {
+                    progressBar.style.width = '25%';
+                }
+                
+                // 如果目标格式是HEIC
+                if (targetExt === 'heic') {
+                    // 先将图片转换为PNG，再转换为HEIC
+                    const pngBlob = await new Promise((resolve, reject) => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
 
-                    img.onload = () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                resolve(blob);
-                            } else {
-                                reject(new Error('转换失败'));
+                        img.onload = () => {
+                            // 更新进度到50%
+                            if (progressBar) {
+                                progressBar.style.width = '50%';
                             }
-                        }, `image/${targetExt}`, 0.9);
-                    };
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0);
+                            canvas.toBlob((blob) => {
+                                if (blob) {
+                                    resolve(blob);
+                                } else {
+                                    reject(new Error('转换失败'));
+                                }
+                            }, 'image/png');
+                        };
 
-                    img.onerror = () => reject(new Error('图片加载失败'));
-                    img.src = URL.createObjectURL(imageBlob);
-                });
+                        img.onerror = () => reject(new Error('图片加载失败'));
+                        img.src = URL.createObjectURL(file);
+                    });
+                    
+                    // 更新进度到75%
+                    if (progressBar) {
+                        progressBar.style.width = '75%';
+                    }
+                    
+                    // 使用heic2any转换为HEIC
+                    try {
+                        const heicBlob = await heic2any({
+                            blob: pngBlob,
+                            toType: 'image/heic'
+                        });
+                        // 更新进度到100%
+                        if (progressBar) {
+                            progressBar.style.width = '100%';
+                        }
+                        return heicBlob;
+                    } catch (error) {
+                        console.error('HEIC转换失败:', error);
+                        throw new Error('HEIC转换失败');
+                    }
+                } 
+                // 如果目标格式不是HEIC
+                else {
+                    let imageBlob = file;
+                    
+                    // 如果是HEIC文件，先转换
+                    if (fileName.endsWith('.heic')) {
+                        imageBlob = await heic2any({ blob: file, toType: 'image/png' });
+                        // 更新进度到50%
+                        if (progressBar) {
+                            progressBar.style.width = '50%';
+                        }
+                    }
+                    
+                    return new Promise((resolve, reject) => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+
+                        img.onload = () => {
+                            // 更新进度到75%
+                            if (progressBar) {
+                                progressBar.style.width = '75%';
+                            }
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0);
+
+                            canvas.toBlob((blob) => {
+                                if (blob) {
+                                    // 更新进度到100%
+                                    if (progressBar) {
+                                        progressBar.style.width = '100%';
+                                    }
+                                    resolve(blob);
+                                } else {
+                                    reject(new Error('转换失败'));
+                                }
+                            }, `image/${targetExt}`, 0.9);
+                        };
+
+                        img.onerror = () => reject(new Error('图片加载失败'));
+                        img.src = URL.createObjectURL(imageBlob);
+                    });
+                }
             } catch (error) {
                 throw error;
             }
@@ -867,8 +1004,46 @@
             downloadButton.disabled = true;
             progressContainer.style.display = 'none';
             progressBar.style.width = '0%';
-            uploadArea.style.display = 'flex';
+            // 重置上传区域
+            uploadIcon.style.display = 'block';
+            uploadText.style.display = 'block';
             showStatus('就绪', 'info');
+        }
+
+        // 更新单个文件的状态
+        function updateSingleFileStatus(item) {
+            const fileItem = document.querySelector(`.file-item[data-id="${item.id}"]`);
+            if (!fileItem) return;
+
+            // 更新状态文本
+            const fileStatus = fileItem.querySelector('.file-status');
+            if (fileStatus) {
+                if (item.status === 'pending') {
+                    fileStatus.className = 'file-status';
+                    fileStatus.textContent = '待转换';
+                } else if (item.status === 'converting') {
+                    fileStatus.className = 'file-status';
+                    fileStatus.textContent = '转换中...';
+                } else if (item.status === 'success') {
+                    fileStatus.className = 'file-status success';
+                    fileStatus.textContent = '转换完成';
+                } else if (item.status === 'error') {
+                    fileStatus.className = 'file-status error';
+                    fileStatus.textContent = '转换失败';
+                }
+            }
+
+            // 更新进度条
+            const progressContainer = fileItem.querySelector('.file-progress-container');
+            const progressBar = fileItem.querySelector('.file-progress-bar');
+            if (progressContainer && progressBar) {
+                if (item.status === 'converting' || item.status === 'success') {
+                    progressContainer.style.display = 'block';
+                    if (item.status === 'success') {
+                        progressBar.style.width = '100%';
+                    }
+                }
+            }
         }
 
         // 显示状态
