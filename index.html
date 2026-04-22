@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>图片格式转换器 - Windows XP风格</title>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <style>
         /* 全局样式 */
         body {
@@ -341,12 +342,12 @@
                 </div>
             </div>
             <div class="window-content">
-                <div class="title">选择多张图片进行批量格式转换</div>
+                <div class="title">选择多张图片进行批量格式转换 (支持HEIC)</div>
                 
                 <div class="upload-area" id="uploadArea">
-                    <input type="file" id="fileInput" accept="image/*" style="display: none;" multiple>
+                    <input type="file" id="fileInput" accept="image/*,.heic" style="display: none;" multiple>
                     <div class="upload-icon">📁</div>
-                    <div class="upload-text">点击或拖拽多张图片到此处<br>支持批量选择和批量转换</div>
+                    <div class="upload-text">点击或拖拽多张图片到此处<br>支持批量选择和批量转换<br>支持HEIC、JPG、PNG、WebP、GIF格式</div>
                 </div>
                 
                 <div class="file-list" id="fileList"></div>
@@ -626,7 +627,11 @@
 
         // 处理多个文件
         function handleFiles(files) {
-            const validFiles = files.filter(file => file.type.startsWith('image/'));
+            // 过滤出有效的图片文件和HEIC文件
+            const validFiles = files.filter(file => {
+                const fileName = file.name.toLowerCase();
+                return file.type.startsWith('image/') || fileName.endsWith('.heic');
+            });
             
             if (validFiles.length === 0) {
                 showStatus('请选择有效的图片文件', 'error');
@@ -649,10 +654,10 @@
         }
 
         // 更新文件列表
-        function updateFileList() {
+        async function updateFileList() {
             fileList.innerHTML = '';
             
-            selectedFiles.forEach(item => {
+            for (const item of selectedFiles) {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.dataset.id = item.id;
@@ -660,11 +665,26 @@
                 const preview = document.createElement('img');
                 preview.className = 'file-preview';
                 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(item.file);
+                try {
+                    let previewSrc;
+                    const fileName = item.file.name.toLowerCase();
+                    
+                    // 处理HEIC文件预览
+                    if (fileName.endsWith('.heic')) {
+                        const convertedBlob = await heic2any({ blob: item.file, toType: 'image/jpeg', quality: 0.3 });
+                        previewSrc = URL.createObjectURL(convertedBlob);
+                    } else {
+                        const reader = new FileReader();
+                        previewSrc = await new Promise((resolve, reject) => {
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(item.file);
+                        });
+                    }
+                    preview.src = previewSrc;
+                } catch (error) {
+                    preview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZDRkNGRhIi8+PHRleHQgeD0iMjAiIHk9IjI1IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2Ij7DpzwvdGV4dD48L3N2Zz4=';
+                }
 
                 const fileInfo = document.createElement('div');
                 fileInfo.className = 'file-info';
@@ -700,7 +720,7 @@
                 fileItem.appendChild(removeBtn);
 
                 fileList.appendChild(fileItem);
-            });
+            }
 
             convertButton.disabled = selectedFiles.length === 0;
             uploadArea.style.display = selectedFiles.length > 0 ? 'none' : 'flex';
@@ -770,29 +790,41 @@
         }
 
         // 转换单张图片
-        function convertSingleImage(file, targetExt) {
-            return new Promise((resolve, reject) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
+        async function convertSingleImage(file, targetExt) {
+            try {
+                const fileName = file.name.toLowerCase();
+                let imageBlob = file;
+                
+                // 如果是HEIC文件，先转换
+                if (fileName.endsWith('.heic')) {
+                    imageBlob = await heic2any({ blob: file, toType: 'image/png' });
+                }
+                
+                return new Promise((resolve, reject) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
 
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
 
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                        } else {
-                            reject(new Error('转换失败'));
-                        }
-                    }, `image/${targetExt}`, 0.9);
-                };
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                resolve(blob);
+                            } else {
+                                reject(new Error('转换失败'));
+                            }
+                        }, `image/${targetExt}`, 0.9);
+                    };
 
-                img.onerror = () => reject(new Error('图片加载失败'));
-                img.src = URL.createObjectURL(file);
-            });
+                    img.onerror = () => reject(new Error('图片加载失败'));
+                    img.src = URL.createObjectURL(imageBlob);
+                });
+            } catch (error) {
+                throw error;
+            }
         }
 
         // 批量下载图片
