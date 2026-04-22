@@ -48,22 +48,11 @@ export const Desktop: React.FC<DesktopProps> = ({ onToolOpen }) => {
     <div className="relative w-full h-screen overflow-hidden">
       {/* Desktop Background */}
       <div 
-        className="absolute inset-0 bg-yellow-50"
-      >
-        {/* Background Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">心态好 情绪好 身体好 运气就好</h1>
-            <p className="text-gray-600 mb-8">Good Mindset Good Mood Good Health Good Luck</p>
-            <div className="flex justify-center space-x-4">
-              <div className="w-16 h-16 bg-blue-400 rounded-full flex items-center justify-center">🐟</div>
-              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center">🐠</div>
-              <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center">🐡</div>
-              <div className="w-16 h-16 bg-purple-400 rounded-full flex items-center justify-center">🦈</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('https://i.imgur.com/9Z7X7ZG.png')`
+        }}
+      />
 
       {/* Desktop Icons */}
       <div className="absolute top-10 left-10 flex flex-col space-y-8 z-10">
