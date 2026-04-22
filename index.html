@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片格式转换器 - Windows XP风格</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: "Microsoft Sans Serif", Arial, sans-serif;
+            background-color: #008080;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* 桌面背景 */
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: #008080;
+        }
+
+        /* 桌面背景Canvas */
+        #desktopCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* 桌面图标 */
+        .desktop-icon {
+            position: absolute;
+            width: 64px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            z-index: 1;
+        }
+
+        .desktop-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-image {
+            width: 48px;
+            height: 48px;
+            background-color: #ffffff;
+            border: 1px solid #808080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .icon-label {
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 窗口样式 */
+        .window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 550px;
+            background-color: #c0c0c0;
+            border: 2px outset #ffffff;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            font-size: 12px;
+            z-index: 10;
+            display: none;
+        }
+
+        .window.active {
+            display: block;
+        }
+
+        /* 窗口标题栏 */
+        .window-titlebar {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        .window-title {
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .control-button {
+            width: 16px;
+            height: 14px;
+            background-color: #c0c0c0;
+            border: 1px inset #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* 窗口内容 */
+        .window-content {
+            padding: 16px;
+            height: calc(100% - 40px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 标题样式 */
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000080;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            border: 2px dashed #808080;
+            background-color: #ffffff;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #000080;
+            background-color: #f0f0f0;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #808080;
+            margin-bottom: 8px;
+        }
+
+        .upload-text {
+            color: #808080;
+            text-align: center;
+        }
+
+        /* 文件列表 */
+        .file-list {
+            flex: 1;
+            background-color: #ffffff;
+            border: 1px inset #ffffff;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 12px;
+            border: 1px solid #808080;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .file-status {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .file-status.success {
+            color: #008000;
+        }
+
+        .file-status.error {
+            color: #ff0000;
+        }
+
+        .file-remove {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .file-remove:hover {
+            background-color: #cc0000;
+        }
+
+        /* 格式选择区域 */
+        .format-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .format-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .format-label {
+            font-weight: bold;
+        }
+
+        .format-select {
+            width: 120px;
+            padding: 4px;
+            border: 1px inset #ffffff;
+            background-color: #ffffff;
+            font-family: "Microsoft Sans Serif", Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        /* 箭头图标 */
+        .arrow {
+            font-size: 24px;
+            color: #000080;
+        }
+
+        /* 按钮区域 */
+        .button-area {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        /* 按钮样式 */
+        .button {
+            padding: 6px 16px;
+            background-color: #c0c0c0;
+            border: 2px outset #ffffff;
+            font-family: "Microsoft Sans Serif", Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .button:hover {
+            background-color: #d0d0d0;
+        }
+
+        .button:active {
+            border-style: inset;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 状态信息 */
+        .status {
+            text-align: center;
+            color: #000080;
+            font-weight: bold;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            background-color: #ffffff;
+            border: 1px inset #ffffff;
+            height: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #008000;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop">
+        <!-- 桌面背景Canvas -->
+        <canvas id="desktopCanvas"></canvas>
+        
+        <!-- 桌面图标 -->
+        <div class="desktop-icon" id="converterIcon">
+            <div class="icon-image">🖼️</div>
+            <div class="icon-label">图片格式转换器</div>
+        </div>
+
+        <!-- 转换器窗口 -->
+        <div class="window" id="converterWindow">
+            <div class="window-titlebar">
+                <div class="window-title">图片格式转换器 - 批量版</div>
+                <div class="window-controls">
+                    <div class="control-button" id="minimizeButton">_</div>
+                    <div class="control-button" id="maximizeButton">□</div>
+                    <div class="control-button" id="closeButton">×</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="title">选择多张图片进行批量格式转换</div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;" multiple>
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击或拖拽多张图片到此处<br>支持批量选择和批量转换</div>
+                </div>
+                
+                <div class="file-list" id="fileList"></div>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <div class="format-section">
+                    <div class="format-group">
+                        <label class="format-label">目标格式</label>
+                        <select id="targetFormat" class="format-select">
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                            <option value="webp">WebP</option>
+                            <option value="gif">GIF</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="button-area">
+                    <button class="button" id="convertButton" disabled>批量转换</button>
+                    <button class="button" id="downloadButton" disabled>批量下载</button>
+                    <button class="button" id="resetButton">清空</button>
+                </div>
+                
+                <div class="status" id="status">就绪</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 绘制桌面背景：狐狸在电脑前办公
+        function drawDesktopBackground() {
+            const canvas = document.getElementById('desktopCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置Canvas尺寸
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // 纯色背景
+            ctx.fillStyle = '#008080';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 计算中心位置
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // 绘制狐狸
+            drawFox(ctx, centerX, centerY);
+            
+            // 绘制电脑
+            drawComputer(ctx, centerX, centerY + 60);
+        }
+        
+        // 绘制狐狸
+        function drawFox(ctx, x, y) {
+            // 身体
+            ctx.fillStyle = '#FF8C42';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 20, 30, 25, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 头部
+            ctx.beginPath();
+            ctx.ellipse(x, y - 10, 25, 20, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 耳朵
+            ctx.beginPath();
+            ctx.moveTo(x - 15, y - 25);
+            ctx.lineTo(x - 25, y - 40);
+            ctx.lineTo(x - 5, y - 30);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 15, y - 25);
+            ctx.lineTo(x + 25, y - 40);
+            ctx.lineTo(x + 5, y - 30);
+            ctx.fill();
+            
+            // 耳朵内耳
+            ctx.fillStyle = '#FFB380';
+            ctx.beginPath();
+            ctx.moveTo(x - 15, y - 25);
+            ctx.lineTo(x - 20, y - 35);
+            ctx.lineTo(x - 10, y - 30);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 15, y - 25);
+            ctx.lineTo(x + 20, y - 35);
+            ctx.lineTo(x + 10, y - 30);
+            ctx.fill();
+            
+            // 眼睛
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.ellipse(x - 8, y - 10, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(x + 8, y - 10, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 眼珠
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x - 8, y - 10, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x + 8, y - 10, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 鼻子
+            ctx.beginPath();
+            ctx.arc(x, y - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 嘴巴
+            ctx.beginPath();
+            ctx.moveTo(x, y - 2);
+            ctx.lineTo(x - 5, y + 2);
+            ctx.lineTo(x + 5, y + 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 手臂
+            ctx.fillStyle = '#FF8C42';
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y + 15);
+            ctx.lineTo(x - 45, y + 10);
+            ctx.lineTo(x - 40, y + 20);
+            ctx.lineTo(x - 25, y + 25);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 30, y + 15);
+            ctx.lineTo(x + 45, y + 10);
+            ctx.lineTo(x + 40, y + 20);
+            ctx.lineTo(x + 25, y + 25);
+            ctx.fill();
+            
+            // 尾巴
+            ctx.beginPath();
+            ctx.moveTo(x + 30, y + 20);
+            ctx.quadraticCurveTo(x + 50, y + 10, x + 40, y + 30);
+            ctx.quadraticCurveTo(x + 50, y + 40, x + 30, y + 30);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // 绘制电脑
+        function drawComputer(ctx, x, y) {
+            // 显示器
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(x - 60, y - 40, 120, 80);
+            
+            // 屏幕
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(x - 55, y - 35, 110, 70);
+            
+            // 电脑桌
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x - 80, y + 40, 160, 10);
+            
+            // 桌腿
+            ctx.fillRect(x - 75, y + 50, 10, 20);
+            ctx.fillRect(x + 65, y + 50, 10, 20);
+            
+            // 键盘
+            ctx.fillStyle = '#CCCCCC';
+            ctx.fillRect(x - 40, y + 10, 80, 20);
+            
+            // 键盘按键
+            ctx.fillStyle = '#FFFFFF';
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 3; j++) {
+                    ctx.fillRect(x - 35 + i * 10, y + 12 + j * 6, 8, 4);
+                }
+            }
+        }
+        
+        // 全局变量
+        let selectedFiles = [];
+        let convertedFiles = [];
+        let isConverting = false;
+
+        // DOM 元素
+        const converterIcon = document.getElementById('converterIcon');
+        const converterWindow = document.getElementById('converterWindow');
+        const closeButton = document.getElementById('closeButton');
+        const minimizeButton = document.getElementById('minimizeButton');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const targetFormat = document.getElementById('targetFormat');
+        const convertButton = document.getElementById('convertButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const resetButton = document.getElementById('resetButton');
+        const status = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+
+        // 窗口控制
+        function initWindowControls() {
+            // 点击图标打开窗口
+            converterIcon.addEventListener('click', () => {
+                converterWindow.classList.add('active');
+            });
+
+            // 关闭按钮
+            closeButton.addEventListener('click', () => {
+                if (!isConverting) {
+                    converterWindow.classList.remove('active');
+                }
+            });
+
+            // 最小化按钮
+            minimizeButton.addEventListener('click', () => {
+                if (!isConverting) {
+                    converterWindow.classList.remove('active');
+                }
+            });
+        }
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 上传区域点击
+            uploadArea.addEventListener('click', () => {
+                if (!isConverting) {
+                    fileInput.click();
+                }
+            });
+
+            // 文件选择
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // 拖放事件
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!isConverting) {
+                    uploadArea.style.borderColor = '#000080';
+                }
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#808080';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#808080';
+                if (!isConverting && e.dataTransfer.files.length > 0) {
+                    handleFiles(Array.from(e.dataTransfer.files));
+                }
+            });
+
+            // 转换按钮
+            convertButton.addEventListener('click', convertAllImages);
+
+            // 下载按钮
+            downloadButton.addEventListener('click', downloadAllImages);
+
+            // 重置按钮
+            resetButton.addEventListener('click', resetForm);
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                handleFiles(Array.from(e.target.files));
+            }
+        }
+
+        // 处理多个文件
+        function handleFiles(files) {
+            const validFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (validFiles.length === 0) {
+                showStatus('请选择有效的图片文件', 'error');
+                return;
+            }
+
+            validFiles.forEach(file => {
+                if (!selectedFiles.some(f => f.name === file.name)) {
+                    selectedFiles.push({
+                        file: file,
+                        id: Date.now() + Math.random(),
+                        status: 'pending',
+                        convertedBlob: null
+                    });
+                }
+            });
+
+            updateFileList();
+            showStatus(`已加载 ${validFiles.length} 张图片，共 ${selectedFiles.length} 张`, 'success');
+        }
+
+        // 更新文件列表
+        function updateFileList() {
+            fileList.innerHTML = '';
+            
+            selectedFiles.forEach(item => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.dataset.id = item.id;
+
+                const preview = document.createElement('img');
+                preview.className = 'file-preview';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(item.file);
+
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name';
+                fileName.textContent = item.file.name;
+
+                const fileStatus = document.createElement('div');
+                fileStatus.className = 'file-status';
+                if (item.status === 'pending') {
+                    fileStatus.textContent = '待转换';
+                } else if (item.status === 'converting') {
+                    fileStatus.textContent = '转换中...';
+                } else if (item.status === 'success') {
+                    fileStatus.className = 'file-status success';
+                    fileStatus.textContent = '转换完成';
+                } else if (item.status === 'error') {
+                    fileStatus.className = 'file-status error';
+                    fileStatus.textContent = '转换失败';
+                }
+
+                fileInfo.appendChild(fileName);
+                fileInfo.appendChild(fileStatus);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'file-remove';
+                removeBtn.textContent = '×';
+                removeBtn.addEventListener('click', () => removeFile(item.id));
+
+                fileItem.appendChild(preview);
+                fileItem.appendChild(fileInfo);
+                fileItem.appendChild(removeBtn);
+
+                fileList.appendChild(fileItem);
+            });
+
+            convertButton.disabled = selectedFiles.length === 0;
+            uploadArea.style.display = selectedFiles.length > 0 ? 'none' : 'flex';
+        }
+
+        // 移除文件
+        function removeFile(id) {
+            if (isConverting) return;
+            
+            selectedFiles = selectedFiles.filter(item => item.id !== id);
+            convertedFiles = convertedFiles.filter(item => item.id !== id);
+            updateFileList();
+            showStatus('文件已移除', 'info');
+        }
+
+        // 批量转换图片
+        async function convertAllImages() {
+            if (selectedFiles.length === 0) {
+                showStatus('请先选择图片', 'error');
+                return;
+            }
+
+            isConverting = true;
+            convertedFiles = [];
+            progressContainer.style.display = 'block';
+            convertButton.disabled = true;
+            downloadButton.disabled = true;
+            resetButton.disabled = true;
+
+            const targetExt = targetFormat.value;
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const item = selectedFiles[i];
+                item.status = 'converting';
+                updateFileList();
+                
+                showStatus(`正在转换 ${i + 1}/${selectedFiles.length}...`, 'info');
+                progressBar.style.width = `${(i / selectedFiles.length) * 100}%`;
+
+                try {
+                    const blob = await convertSingleImage(item.file, targetExt);
+                    item.convertedBlob = blob;
+                    item.status = 'success';
+                    convertedFiles.push(item);
+                    successCount++;
+                } catch (error) {
+                    item.status = 'error';
+                    failCount++;
+                }
+                
+                updateFileList();
+            }
+
+            progressBar.style.width = '100%';
+            
+            if (failCount === 0) {
+                showStatus(`全部 ${successCount} 张图片转换完成`, 'success');
+            } else {
+                showStatus(`完成 ${successCount} 张，失败 ${failCount} 张`, 'info');
+            }
+
+            isConverting = false;
+            downloadButton.disabled = convertedFiles.length === 0;
+            resetButton.disabled = false;
+        }
+
+        // 转换单张图片
+        function convertSingleImage(file, targetExt) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('转换失败'));
+                        }
+                    }, `image/${targetExt}`, 0.9);
+                };
+
+                img.onerror = () => reject(new Error('图片加载失败'));
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // 批量下载图片
+        function downloadAllImages() {
+            if (convertedFiles.length === 0) {
+                showStatus('请先转换图片', 'error');
+                return;
+            }
+
+            const targetExt = targetFormat.value;
+            
+            convertedFiles.forEach((item, index) => {
+                setTimeout(() => {
+                    const originalName = item.file.name.replace(/\.[^/.]+$/, '');
+                    const fileName = `${originalName}_converted.${targetExt}`;
+                    const url = URL.createObjectURL(item.convertedBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, index * 300);
+            });
+
+            showStatus(`已开始下载 ${convertedFiles.length} 张图片`, 'success');
+        }
+
+        // 重置表单
+        function resetForm() {
+            if (isConverting) return;
+            
+            selectedFiles = [];
+            convertedFiles = [];
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            targetFormat.value = 'jpg';
+            convertButton.disabled = true;
+            downloadButton.disabled = true;
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            uploadArea.style.display = 'flex';
+            showStatus('就绪', 'info');
+        }
+
+        // 显示状态
+        function showStatus(message, type = 'info') {
+            status.textContent = message;
+            status.style.color = type === 'error' ? '#ff0000' : type === 'success' ? '#008000' : '#000080';
+        }
+
+        // 初始化
+        window.addEventListener('load', () => {
+            drawDesktopBackground();
+            initWindowControls();
+            initEventListeners();
+        });
+        
+        // 窗口大小变化时重绘
+        window.addEventListener('resize', drawDesktopBackground);
+    </script>
+</body>
+</html>
