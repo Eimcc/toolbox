@@ -149,9 +149,16 @@ function initWindowControls() {
                 isDragging = true;
                 startX = e.clientX;
                 startY = e.clientY;
-                initialLeft = parseInt(window.style.left || '50%');
-                initialTop = parseInt(window.style.top || '50%');
+                
+                // 获取当前窗口的实际位置
+                const rect = window.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
                 window.style.zIndex = '100'; // 确保当前窗口在最前面
+                window.style.transform = 'none'; // 移除transform以使用left和top定位
+                window.style.left = `${initialLeft}px`;
+                window.style.top = `${initialTop}px`;
             });
 
             document.addEventListener('mousemove', (e) => {
@@ -162,7 +169,6 @@ function initWindowControls() {
                 
                 window.style.left = `${initialLeft + deltaX}px`;
                 window.style.top = `${initialTop + deltaY}px`;
-                window.style.transform = 'none'; // 覆盖默认的transform
             });
 
             document.addEventListener('mouseup', () => {
