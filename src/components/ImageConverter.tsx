@@ -1,21 +1,33 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ImageConverterProps {
   isOpen: boolean;
   onClose: () => void;
-  position: { x: number; y: number };
 }
 
 export const ImageConverter: React.FC<ImageConverterProps> = ({
   isOpen,
   onClose,
-  position,
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [outputFormat, setOutputFormat] = useState('png');
   const [convertedFiles, setConvertedFiles] = useState<Blob[]>([]);
   const [isConverting, setIsConverting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (isOpen) {
+      // 计算居中位置
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const dialogWidth = 500;
+      const dialogHeight = 600;
+      const x = (windowWidth - dialogWidth) / 2;
+      const y = (windowHeight - dialogHeight) / 2;
+      setPosition({ x, y });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -98,7 +110,7 @@ export const ImageConverter: React.FC<ImageConverterProps> = ({
 
   return (
     <div
-      className="fixed z-50 w-96 bg-white border-2 border-gray-400 shadow-lg"
+      className="fixed z-50 w-[500px] h-[600px] bg-white border-2 border-gray-400 shadow-lg"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -119,7 +131,7 @@ export const ImageConverter: React.FC<ImageConverterProps> = ({
       </div>
 
       {/* Window Content */}
-      <div className="p-4">
+      <div className="p-4 h-[560px] overflow-y-auto">
         {/* File Upload Area */}
         <div
           className="border-2 border-dashed border-gray-400 rounded p-6 text-center mb-4"
@@ -149,7 +161,7 @@ export const ImageConverter: React.FC<ImageConverterProps> = ({
             <ul className="space-y-2">
               {files.map((file, index) => (
                 <li key={index} className="flex items-center justify-between text-sm">
-                  <span className="truncate max-w-[200px]">{file.name}</span>
+                  <span className="truncate max-w-[350px]">{file.name}</span>
                   <button
                     onClick={() => removeFile(index)}
                     className="text-red-600 hover:text-red-800"

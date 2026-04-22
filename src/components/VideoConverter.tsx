@@ -1,21 +1,33 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface VideoConverterProps {
   isOpen: boolean;
   onClose: () => void;
-  position: { x: number; y: number };
 }
 
 export const VideoConverter: React.FC<VideoConverterProps> = ({
   isOpen,
   onClose,
-  position,
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [outputFormat, setOutputFormat] = useState('mp4');
   const [convertedFile, setConvertedFile] = useState<Blob | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (isOpen) {
+      // 计算居中位置
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const dialogWidth = 500;
+      const dialogHeight = 400;
+      const x = (windowWidth - dialogWidth) / 2;
+      const y = (windowHeight - dialogHeight) / 2;
+      setPosition({ x, y });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -68,7 +80,7 @@ export const VideoConverter: React.FC<VideoConverterProps> = ({
 
   return (
     <div
-      className="fixed z-50 w-96 bg-white border-2 border-gray-400 shadow-lg"
+      className="fixed z-50 w-[500px] h-[400px] bg-white border-2 border-gray-400 shadow-lg"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -89,7 +101,7 @@ export const VideoConverter: React.FC<VideoConverterProps> = ({
       </div>
 
       {/* Window Content */}
-      <div className="p-4">
+      <div className="p-4 h-[360px] overflow-y-auto">
         {/* File Upload Area */}
         <div
           className="border-2 border-dashed border-gray-400 rounded p-6 text-center mb-4"

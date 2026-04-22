@@ -9,8 +9,6 @@ interface DesktopProps {
 export const Desktop: React.FC<DesktopProps> = ({ onToolOpen }) => {
   const [imageConverterOpen, setImageConverterOpen] = useState(false);
   const [videoConverterOpen, setVideoConverterOpen] = useState(false);
-  const [imageConverterPosition, setImageConverterPosition] = useState({ x: 100, y: 100 });
-  const [videoConverterPosition, setVideoConverterPosition] = useState({ x: 300, y: 100 });
 
   const handleImageConverterOpen = () => {
     setImageConverterOpen(true);
@@ -80,14 +78,12 @@ export const Desktop: React.FC<DesktopProps> = ({ onToolOpen }) => {
       <ImageConverter
         isOpen={imageConverterOpen}
         onClose={() => setImageConverterOpen(false)}
-        position={imageConverterPosition}
       />
 
       {/* Video Converter Window */}
       <VideoConverter
         isOpen={videoConverterOpen}
         onClose={() => setVideoConverterOpen(false)}
-        position={videoConverterPosition}
       />
     </div>
   );
