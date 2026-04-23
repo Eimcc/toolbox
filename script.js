@@ -2966,3 +2966,14 @@ init = function() {
     originalInit.call(this);
     initStandaloneImageEditor();
 };
+
+// 文档加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+// 启动时钟更新
+setInterval(updateClock, 60000);
+updateClock();
