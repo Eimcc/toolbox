@@ -2163,6 +2163,9 @@ function initStandaloneImageEditor() {
     standaloneEditorCanvas = document.getElementById('editorCanvas');
     standaloneEditorCtx = standaloneEditorCanvas.getContext('2d');
     
+    // 添加快捷键支持
+    addEditorKeyboardShortcuts();
+    
     // 图片编辑器窗口控制
     imageEditorIcon.addEventListener('click', () => {
         imageEditorWindow.classList.add('active');
@@ -2199,7 +2202,9 @@ function initStandaloneImageEditor() {
         e.preventDefault();
         editorUploadArea.style.borderColor = '#808080';
         if (e.dataTransfer.files.length > 0) {
-            handleEditorFiles(Array.from(e.dataTransfer.files));
+            const files = Array.from(e.dataTransfer.files);
+            // 直接打开工作界面
+            handleEditorFilesAndOpen(files);
         }
     });
 
@@ -2209,7 +2214,9 @@ function initStandaloneImageEditor() {
 
     editorFileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            handleEditorFiles(Array.from(e.target.files));
+            const files = Array.from(e.target.files);
+            // 直接打开工作界面
+            handleEditorFilesAndOpen(files);
         }
     });
     
@@ -2268,6 +2275,40 @@ function handleEditorFiles(files) {
 
     updateEditorFileList();
     showEditorStatus(`已加载 ${validFiles.length} 张图片，共 ${editorSelectedFiles.length} 张`, 'success');
+}
+
+// 处理编辑器文件并打开工作界面
+function handleEditorFilesAndOpen(files) {
+    // 过滤出有效的图片文件和HEIC文件
+    const validFiles = files.filter(file => {
+        const fileName = file.name.toLowerCase();
+        return file.type.startsWith('image/') || fileName.endsWith('.heic');
+    });
+    
+    if (validFiles.length === 0) {
+        showEditorStatus('请选择有效的图片文件', 'error');
+        return;
+    }
+
+    validFiles.forEach(file => {
+        if (!editorSelectedFiles.some(f => f.name === file.name)) {
+            editorSelectedFiles.push({
+                file: file,
+                id: Date.now() + Math.random(),
+                status: 'pending',
+                editedBlob: null
+            });
+        }
+    });
+
+    updateEditorFileList();
+    showEditorStatus(`已加载 ${validFiles.length} 张图片，共 ${editorSelectedFiles.length} 张`, 'success');
+    
+    // 直接打开工作界面
+    if (validFiles.length > 0) {
+        currentEditorIndex = 0;
+        openStandaloneEditor();
+    }
 }
 
 // 更新编辑器文件列表
@@ -2958,6 +2999,58 @@ function saveStandaloneImageEdit() {
         document.getElementById('editorWorkWindow').classList.remove('active');
         showEditorStatus('图片已编辑', 'success');
     }, 'image/png');
+}
+
+// 添加编辑器快捷键
+function addEditorKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // 检查是否在编辑器工作窗口中
+        const editorWorkWindow = document.getElementById('editorWorkWindow');
+        if (!editorWorkWindow.classList.contains('active')) return;
+        
+        // Ctrl+S 保存
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            saveStandaloneImageEdit();
+        }
+        
+        // Ctrl+Z 撤销（重置调整）
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            resetStandaloneAdjustSettings();
+        }
+        
+        // Ctrl+Y 重做（这里暂时用不到）
+        
+        // Esc 取消
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            document.getElementById('editorWorkWindow').classList.remove('active');
+        }
+        
+        // 方向键移动裁剪框
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 1; // Shift键加速
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                    editorCropBox.y = Math.max(0, editorCropBox.y - step);
+                    break;
+                case 'ArrowDown':
+                    editorCropBox.y = Math.min(standaloneEditorCanvas.height - editorCropBox.height, editorCropBox.y + step);
+                    break;
+                case 'ArrowLeft':
+                    editorCropBox.x = Math.max(0, editorCropBox.x - step);
+                    break;
+                case 'ArrowRight':
+                    editorCropBox.x = Math.min(standaloneEditorCanvas.width - editorCropBox.width, editorCropBox.x + step);
+                    break;
+            }
+            
+            updateStandaloneCropBoxUI();
+        }
+    });
 }
 
 // 修改 init 函数，添加独立图片编辑器初始化

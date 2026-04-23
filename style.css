@@ -568,6 +568,7 @@ body {
     margin-bottom: 8px;
     border-bottom: 2px solid;
     border-color: #aca899 #fff #fff #aca899;
+    background: linear-gradient(to bottom, #f0f0f0 0%, #e0e0e0 100%);
 }
 
 .tab {
@@ -575,18 +576,25 @@ body {
     padding: 6px 12px;
     text-align: center;
     cursor: pointer;
-    background: #d4d0c8;
+    background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%);
     border: 2px solid;
-    border-color: #fff #aca899 #d4d0c8 #fff;
+    border-color: #fff #aca899 #aca899 #fff;
     border-bottom: none;
     margin-bottom: -2px;
     font-weight: bold;
     font-size: 11px;
+    transition: all 0.1s ease;
+}
+
+.tab:hover {
+    background: linear-gradient(to bottom, #ffffff 0%, #e8e8e8 50%, #d8d8d8 100%);
 }
 
 .tab.active {
     background: #ece9d8;
     border-bottom: 2px solid #ece9d8;
+    border-color: #aca899 #fff #fff #aca899;
+    box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #c0c0c0;
 }
 
 .tab-content {
