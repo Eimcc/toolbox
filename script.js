@@ -2661,8 +2661,32 @@ function updateStandaloneCropBoxFromRatio() {
         editorCropBox.width = editorCropBox.height * editorCropRatio;
     }
     
+    // 检查裁剪框是否超出画布
+    const canvasWidth = standaloneEditorCanvas.width;
+    const canvasHeight = standaloneEditorCanvas.height;
+    
+    let scale = 1;
+    // 计算需要的缩放比例
+    if (editorCropBox.width > canvasWidth || editorCropBox.height > canvasHeight) {
+        const widthScale = canvasWidth / editorCropBox.width;
+        const heightScale = canvasHeight / editorCropBox.height;
+        scale = Math.min(widthScale, heightScale) * 0.9; // 留10%的边距
+    }
+    
+    // 如果需要缩放
+    if (scale < 1) {
+        // 缩放裁剪框
+        editorCropBox.width *= scale;
+        editorCropBox.height *= scale;
+    }
+    
+    // 确保裁剪框在画布内
     editorCropBox.x = centerX - editorCropBox.width / 2;
     editorCropBox.y = centerY - editorCropBox.height / 2;
+    
+    // 调整位置，确保裁剪框完全在画布内
+    editorCropBox.x = Math.max(0, Math.min(canvasWidth - editorCropBox.width, editorCropBox.x));
+    editorCropBox.y = Math.max(0, Math.min(canvasHeight - editorCropBox.height, editorCropBox.y));
     
     updateStandaloneCropBoxUI();
 }
