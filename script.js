@@ -2118,9 +2118,851 @@ updateImageFileList = async function() {
     document.getElementById('imageEditButton').disabled = imageSelectedFiles.length === 0;
 };
 
-// 页面加载完成后初始化
-window.addEventListener('load', () => {
-    init();
-    updateClock();
-    setInterval(updateClock, 1000);
-});
+// 独立图片编辑器相关变量
+let editorSelectedFiles = [];
+let editorEditedFiles = [];
+let currentEditorIndex = 0;
+let editorCanvas, editorCtx;
+let editorOriginalImage = null;
+let editorCurrentImage = null;
+let editorIsCropping = false;
+let editorCropBox = { x: 0, y: 0, width: 0, height: 0 };
+let editorCropRatio = null;
+let editorCropStart = null;
+let editorResizeHandle = null;
+let editorAdjustSettings = {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    grayscale: false,
+    invert: false,
+    sepia: false,
+    rotation: 0,
+    flipH: false,
+    flipV: false
+};
+
+// 初始化独立图片编辑器
+function initStandaloneImageEditor() {
+    const imageEditorIcon = document.getElementById('imageEditorIcon');
+    const imageEditorWindow = document.getElementById('imageEditorWindow');
+    const imageEditorCloseButton = document.getElementById('imageEditorCloseButton');
+    const imageEditorMinButton = document.getElementById('imageEditorMinButton');
+    const editorUploadArea = document.getElementById('editorUploadArea');
+    const editorFileInput = document.getElementById('editorFileInput');
+    const openEditorButton = document.getElementById('openEditorButton');
+    const editorDownloadButton = document.getElementById('editorDownloadButton');
+    const editorResetButton = document.getElementById('editorResetButton');
+    const editorWorkWindow = document.getElementById('editorWorkWindow');
+    const editorWorkCloseButton = document.getElementById('editorWorkCloseButton');
+    const editorWorkMinButton = document.getElementById('editorWorkMinButton');
+    const saveEditorButton = document.getElementById('saveEditor');
+    const cancelEditorButton = document.getElementById('cancelEditor');
+    
+    // 初始化canvas
+    editorCanvas = document.getElementById('editorCanvas');
+    editorCtx = editorCanvas.getContext('2d');
+    
+    // 图片编辑器窗口控制
+    imageEditorIcon.addEventListener('click', () => {
+        imageEditorWindow.classList.add('active');
+    });
+
+    imageEditorCloseButton.addEventListener('click', () => {
+        imageEditorWindow.classList.remove('active');
+    });
+
+    imageEditorMinButton.addEventListener('click', () => {
+        imageEditorWindow.classList.remove('active');
+    });
+    
+    // 编辑工作区窗口控制
+    editorWorkCloseButton.addEventListener('click', () => {
+        editorWorkWindow.classList.remove('active');
+    });
+
+    editorWorkMinButton.addEventListener('click', () => {
+        editorWorkWindow.classList.remove('active');
+    });
+    
+    // 上传事件
+    editorUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        editorUploadArea.style.borderColor = '#000080';
+    });
+
+    editorUploadArea.addEventListener('dragleave', () => {
+        editorUploadArea.style.borderColor = '#808080';
+    });
+
+    editorUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        editorUploadArea.style.borderColor = '#808080';
+        if (e.dataTransfer.files.length > 0) {
+            handleEditorFiles(Array.from(e.dataTransfer.files));
+        }
+    });
+
+    editorUploadArea.addEventListener('click', () => {
+        editorFileInput.click();
+    });
+
+    editorFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleEditorFiles(Array.from(e.target.files));
+        }
+    });
+    
+    // 按钮事件
+    openEditorButton.addEventListener('click', () => {
+        if (editorSelectedFiles.length === 0) {
+            showEditorStatus('请先选择图片', 'error');
+            return;
+        }
+        currentEditorIndex = 0;
+        openStandaloneEditor();
+    });
+    
+    editorDownloadButton.addEventListener('click', downloadAllEditorImages);
+    editorResetButton.addEventListener('click', resetEditorForm);
+    
+    // 保存和取消
+    saveEditorButton.addEventListener('click', saveStandaloneImageEdit);
+    cancelEditorButton.addEventListener('click', () => {
+        editorWorkWindow.classList.remove('active');
+    });
+    
+    // 初始化标签页
+    initStandaloneEditorTabs();
+    
+    // 初始化裁剪功能
+    initStandaloneCropControls();
+    
+    // 初始化调整功能
+    initStandaloneAdjustControls();
+}
+
+// 处理编辑器文件
+function handleEditorFiles(files) {
+    // 过滤出有效的图片文件和HEIC文件
+    const validFiles = files.filter(file => {
+        const fileName = file.name.toLowerCase();
+        return file.type.startsWith('image/') || fileName.endsWith('.heic');
+    });
+    
+    if (validFiles.length === 0) {
+        showEditorStatus('请选择有效的图片文件', 'error');
+        return;
+    }
+
+    validFiles.forEach(file => {
+        if (!editorSelectedFiles.some(f => f.name === file.name)) {
+            editorSelectedFiles.push({
+                file: file,
+                id: Date.now() + Math.random(),
+                status: 'pending',
+                editedBlob: null
+            });
+        }
+    });
+
+    updateEditorFileList();
+    showEditorStatus(`已加载 ${validFiles.length} 张图片，共 ${editorSelectedFiles.length} 张`, 'success');
+}
+
+// 更新编辑器文件列表
+async function updateEditorFileList() {
+    const editorFileList = document.getElementById('editorFileList');
+    editorFileList.innerHTML = '';
+    
+    for (const item of editorSelectedFiles) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.dataset.id = item.id;
+
+        const preview = document.createElement('img');
+        preview.className = 'file-preview';
+        
+        // 生成预览
+        const previewSrc = await generateImagePreview(item.file);
+        preview.src = previewSrc;
+
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = item.file.name;
+
+        const fileStatus = document.createElement('div');
+        fileStatus.className = 'file-status';
+        if (item.status === 'pending') {
+            fileStatus.textContent = '待编辑';
+        } else if (item.status === 'edited') {
+            fileStatus.className = 'file-status success';
+            fileStatus.textContent = '编辑完成';
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'file-remove';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', () => removeEditorFile(item.id));
+
+        fileItem.appendChild(preview);
+        fileItem.appendChild(fileInfo);
+        fileItem.appendChild(removeBtn);
+
+        editorFileList.appendChild(fileItem);
+    }
+
+    const openEditorButton = document.getElementById('openEditorButton');
+    const editorDownloadButton = document.getElementById('editorDownloadButton');
+    
+    openEditorButton.disabled = editorSelectedFiles.length === 0;
+    editorDownloadButton.disabled = editorEditedFiles.length === 0;
+    
+    // 显示或隐藏上传图标和文本
+    const editorUploadIcon = document.getElementById('editorUploadIcon');
+    const editorUploadText = document.getElementById('editorUploadText');
+    if (editorSelectedFiles.length > 0) {
+        editorUploadIcon.style.opacity = '0';
+        editorUploadText.style.opacity = '0';
+        setTimeout(() => {
+            editorUploadIcon.style.display = 'none';
+            editorUploadText.style.display = 'none';
+        }, 500);
+    } else {
+        editorUploadIcon.style.display = 'block';
+        editorUploadText.style.display = 'block';
+        setTimeout(() => {
+            editorUploadIcon.style.opacity = '1';
+            editorUploadText.style.opacity = '1';
+        }, 100);
+    }
+}
+
+// 移除编辑器文件
+function removeEditorFile(id) {
+    editorSelectedFiles = editorSelectedFiles.filter(item => item.id !== id);
+    editorEditedFiles = editorEditedFiles.filter(item => item.id !== id);
+    updateEditorFileList();
+    showEditorStatus('文件已移除', 'info');
+}
+
+// 重置编辑器表单
+function resetEditorForm() {
+    editorSelectedFiles = [];
+    editorEditedFiles = [];
+    updateEditorFileList();
+    showEditorStatus('就绪', 'info');
+}
+
+// 显示编辑器状态
+function showEditorStatus(message, type = 'info') {
+    const editorStatus = document.getElementById('editorStatus');
+    editorStatus.textContent = message;
+    if (type === 'error') {
+        editorStatus.style.color = '#ff0000';
+    } else if (type === 'success') {
+        editorStatus.style.color = '#008000';
+    } else {
+        editorStatus.style.color = '#000080';
+    }
+}
+
+// 下载所有编辑后的图片
+function downloadAllEditorImages() {
+    if (editorEditedFiles.length === 0) {
+        showEditorStatus('没有可下载的文件', 'error');
+        return;
+    }
+    
+    editorEditedFiles.forEach(item => {
+        const fileName = item.file.name.replace(/\.[^/.]+$/, '') + '_edited.png';
+        const url = URL.createObjectURL(item.editedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+    
+    showEditorStatus(`已下载 ${editorEditedFiles.length} 张图片`, 'success');
+}
+
+// 打开独立编辑器
+function openStandaloneEditor() {
+    const file = editorSelectedFiles[currentEditorIndex];
+    if (!file) return;
+    
+    const img = new Image();
+    img.onload = () => {
+        editorOriginalImage = img;
+        editorCurrentImage = img;
+        
+        // 设置canvas尺寸
+        editorCanvas.width = img.width;
+        editorCanvas.height = img.height;
+        
+        // 重置调整设置
+        resetStandaloneAdjustSettings();
+        
+        // 绘制图片
+        drawStandaloneEditorImage();
+        
+        // 初始化裁剪框
+        initStandaloneCropBox();
+        
+        document.getElementById('editorWorkWindow').classList.add('active');
+    };
+    
+    img.src = URL.createObjectURL(file.file);
+}
+
+// 绘制编辑器图片
+function drawStandaloneEditorImage() {
+    if (!editorCurrentImage) return;
+    
+    // 保存当前状态
+    editorCtx.save();
+    
+    // 清空canvas
+    editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+    
+    // 应用变换
+    const centerX = editorCanvas.width / 2;
+    const centerY = editorCanvas.height / 2;
+    
+    editorCtx.translate(centerX, centerY);
+    
+    // 应用旋转
+    editorCtx.rotate((editorAdjustSettings.rotation * Math.PI) / 180);
+    
+    // 应用翻转
+    editorCtx.scale(editorAdjustSettings.flipH ? -1 : 1, editorAdjustSettings.flipV ? -1 : 1);
+    
+    // 绘制图片
+    editorCtx.drawImage(editorCurrentImage, -editorCurrentImage.width / 2, -editorCurrentImage.height / 2);
+    
+    // 恢复状态
+    editorCtx.restore();
+    
+    // 应用滤镜
+    applyStandaloneFilters();
+}
+
+// 应用滤镜
+function applyStandaloneFilters() {
+    let filterString = '';
+    
+    if (editorAdjustSettings.brightness !== 0) {
+        filterString += `brightness(${100 + editorAdjustSettings.brightness}%) `;
+    }
+    
+    if (editorAdjustSettings.contrast !== 0) {
+        filterString += `contrast(${100 + editorAdjustSettings.contrast}%) `;
+    }
+    
+    if (editorAdjustSettings.saturation !== 0) {
+        filterString += `saturate(${100 + editorAdjustSettings.saturation}%) `;
+    }
+    
+    if (editorAdjustSettings.grayscale) {
+        filterString += 'grayscale(100%) ';
+    }
+    
+    if (editorAdjustSettings.invert) {
+        filterString += 'invert(100%) ';
+    }
+    
+    if (editorAdjustSettings.sepia) {
+        filterString += 'sepia(100%) ';
+    }
+    
+    if (filterString) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = editorCanvas.width;
+        tempCanvas.height = editorCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        tempCtx.filter = filterString.trim();
+        tempCtx.drawImage(editorCanvas, 0, 0);
+        
+        editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+        editorCtx.drawImage(tempCanvas, 0, 0);
+    }
+}
+
+// 初始化标签页
+function initStandaloneEditorTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`${tabName}Panel`).classList.add('active');
+            
+            if (tabName === 'crop') {
+                document.getElementById('cropOverlay').style.display = 'block';
+            } else {
+                document.getElementById('cropOverlay').style.display = 'none';
+            }
+        });
+    });
+}
+
+// 初始化裁剪框
+function initStandaloneCropBox() {
+    editorCropBox = {
+        x: editorCanvas.width * 0.1,
+        y: editorCanvas.height * 0.1,
+        width: editorCanvas.width * 0.8,
+        height: editorCanvas.height * 0.8
+    };
+    updateStandaloneCropBoxUI();
+}
+
+// 更新裁剪框UI
+function updateStandaloneCropBoxUI() {
+    const cropBoxElement = document.getElementById('cropBox');
+    cropBoxElement.innerHTML = '';
+    
+    cropBoxElement.style.left = `${editorCropBox.x}px`;
+    cropBoxElement.style.top = `${editorCropBox.y}px`;
+    cropBoxElement.style.width = `${editorCropBox.width}px`;
+    cropBoxElement.style.height = `${editorCropBox.height}px`;
+    
+    // 添加调整手柄
+    const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+    handles.forEach(pos => {
+        const handle = document.createElement('div');
+        handle.className = `crop-handle ${pos}`;
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startStandaloneResizeCrop(e, pos);
+        });
+        cropBoxElement.appendChild(handle);
+    });
+}
+
+// 初始化裁剪控制
+function initStandaloneCropControls() {
+    const cropOverlay = document.getElementById('cropOverlay');
+    const cropBoxElement = document.getElementById('cropBox');
+    const cropRatioSelect = document.getElementById('cropRatio');
+    const cropPresetSelect = document.getElementById('cropPreset');
+    const applyCropBtn = document.getElementById('applyCrop');
+    const resetCropBtn = document.getElementById('resetCrop');
+    
+    // 裁剪比例变化
+    cropRatioSelect.addEventListener('change', () => {
+        const ratio = cropRatioSelect.value;
+        if (ratio === 'free') {
+            editorCropRatio = null;
+        } else {
+            const [w, h] = ratio.split(':').map(Number);
+            editorCropRatio = w / h;
+        }
+        updateStandaloneCropBoxFromRatio();
+    });
+    
+    // 裁剪预设变化
+    cropPresetSelect.addEventListener('change', () => {
+        const preset = cropPresetSelect.value;
+        if (preset !== 'none') {
+            const cropPresets = {
+                'a4-portrait': { ratio: 210/297 },
+                'a4-landscape': { ratio: 297/210 },
+                'a3-portrait': { ratio: 297/420 },
+                'a3-landscape': { ratio: 420/297 },
+                'id-1inch': { ratio: 25/35 },
+                'id-2inch': { ratio: 35/49 },
+                'instagram': { ratio: 1 },
+                'cover-facebook': { ratio: 820/312 },
+                'cover-twitter': { ratio: 1500/500 }
+            };
+            if (cropPresets[preset]) {
+                editorCropRatio = cropPresets[preset].ratio;
+                cropRatioSelect.value = 'free';
+                updateStandaloneCropBoxFromRatio();
+            }
+        }
+    });
+    
+    // 应用裁剪
+    applyCropBtn.addEventListener('click', applyStandaloneCrop);
+    
+    // 重置裁剪
+    resetCropBtn.addEventListener('click', () => {
+        initStandaloneCropBox();
+    });
+    
+    // 裁剪框拖拽
+    cropBoxElement.addEventListener('mousedown', startStandaloneCropDrag);
+    cropOverlay.addEventListener('mousedown', startStandaloneCropDraw);
+}
+
+// 根据比例更新裁剪框
+function updateStandaloneCropBoxFromRatio() {
+    if (!editorCropRatio) return;
+    
+    const currentRatio = editorCropBox.width / editorCropBox.height;
+    const centerX = editorCropBox.x + editorCropBox.width / 2;
+    const centerY = editorCropBox.y + editorCropBox.height / 2;
+    
+    if (currentRatio > editorCropRatio) {
+        editorCropBox.height = editorCropBox.width / editorCropRatio;
+    } else {
+        editorCropBox.width = editorCropBox.height * editorCropRatio;
+    }
+    
+    editorCropBox.x = centerX - editorCropBox.width / 2;
+    editorCropBox.y = centerY - editorCropBox.height / 2;
+    
+    updateStandaloneCropBoxUI();
+}
+
+// 开始绘制裁剪框
+function startStandaloneCropDraw(e) {
+    if (e.target !== document.getElementById('cropOverlay')) return;
+    
+    const rect = document.getElementById('cropOverlay').getBoundingClientRect();
+    editorCropStart = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+    
+    editorCropBox = {
+        x: editorCropStart.x,
+        y: editorCropStart.y,
+        width: 0,
+        height: 0
+    };
+    
+    editorIsCropping = true;
+    
+    document.addEventListener('mousemove', onStandaloneCropDraw);
+    document.addEventListener('mouseup', stopStandaloneCrop);
+}
+
+// 绘制裁剪框
+function onStandaloneCropDraw(e) {
+    if (!editorIsCropping) return;
+    
+    const rect = document.getElementById('cropOverlay').getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+    
+    editorCropBox.x = Math.min(editorCropStart.x, currentX);
+    editorCropBox.y = Math.min(editorCropStart.y, currentY);
+    editorCropBox.width = Math.abs(currentX - editorCropStart.x);
+    editorCropBox.height = Math.abs(currentY - editorCropStart.y);
+    
+    // 保持比例
+    if (editorCropRatio) {
+        const currentRatio = editorCropBox.width / editorCropBox.height;
+        if (currentRatio > editorCropRatio) {
+            editorCropBox.height = editorCropBox.width / editorCropRatio;
+        } else {
+            editorCropBox.width = editorCropBox.height * editorCropRatio;
+        }
+    }
+    
+    updateStandaloneCropBoxUI();
+}
+
+// 停止裁剪
+function stopStandaloneCrop() {
+    editorIsCropping = false;
+    document.removeEventListener('mousemove', onStandaloneCropDraw);
+    document.removeEventListener('mouseup', stopStandaloneCrop);
+}
+
+// 开始拖拽裁剪框
+function startStandaloneCropDrag(e) {
+    if (e.target.classList.contains('crop-handle')) return;
+    
+    const rect = document.getElementById('cropOverlay').getBoundingClientRect();
+    editorCropStart = {
+        x: e.clientX - rect.left - editorCropBox.x,
+        y: e.clientY - rect.top - editorCropBox.y
+    };
+    
+    document.addEventListener('mousemove', onStandaloneCropDrag);
+    document.addEventListener('mouseup', stopStandaloneCropDrag);
+}
+
+// 拖拽裁剪框
+function onStandaloneCropDrag(e) {
+    const rect = document.getElementById('cropOverlay').getBoundingClientRect();
+    editorCropBox.x = e.clientX - rect.left - editorCropStart.x;
+    editorCropBox.y = e.clientY - rect.top - editorCropStart.y;
+    updateStandaloneCropBoxUI();
+}
+
+// 停止拖拽
+function stopStandaloneCropDrag() {
+    document.removeEventListener('mousemove', onStandaloneCropDrag);
+    document.removeEventListener('mouseup', stopStandaloneCropDrag);
+}
+
+// 开始调整裁剪框大小
+function startStandaloneResizeCrop(e, position) {
+    editorResizeHandle = position;
+    editorCropStart = {
+        x: e.clientX,
+        y: e.clientY,
+        origX: editorCropBox.x,
+        origY: editorCropBox.y,
+        origW: editorCropBox.width,
+        origH: editorCropBox.height
+    };
+    
+    document.addEventListener('mousemove', onStandaloneResizeCrop);
+    document.addEventListener('mouseup', stopStandaloneResizeCrop);
+}
+
+// 调整裁剪框大小
+function onStandaloneResizeCrop(e) {
+    const rect = document.getElementById('cropOverlay').getBoundingClientRect();
+    const deltaX = e.clientX - editorCropStart.x;
+    const deltaY = e.clientY - editorCropStart.y;
+    
+    switch (editorResizeHandle) {
+        case 'se':
+            editorCropBox.width = Math.max(10, editorCropStart.origW + deltaX);
+            editorCropBox.height = Math.max(10, editorCropStart.origH + deltaY);
+            break;
+        case 'sw':
+            editorCropBox.x = editorCropStart.origX + deltaX;
+            editorCropBox.width = Math.max(10, editorCropStart.origW - deltaX);
+            editorCropBox.height = Math.max(10, editorCropStart.origH + deltaY);
+            break;
+        case 'ne':
+            editorCropBox.y = editorCropStart.origY + deltaY;
+            editorCropBox.width = Math.max(10, editorCropStart.origW + deltaX);
+            editorCropBox.height = Math.max(10, editorCropStart.origH - deltaY);
+            break;
+        case 'nw':
+            editorCropBox.x = editorCropStart.origX + deltaX;
+            editorCropBox.y = editorCropStart.origY + deltaY;
+            editorCropBox.width = Math.max(10, editorCropStart.origW - deltaX);
+            editorCropBox.height = Math.max(10, editorCropStart.origH - deltaY);
+            break;
+        case 'n':
+            editorCropBox.y = editorCropStart.origY + deltaY;
+            editorCropBox.height = Math.max(10, editorCropStart.origH - deltaY);
+            break;
+        case 's':
+            editorCropBox.height = Math.max(10, editorCropStart.origH + deltaY);
+            break;
+        case 'e':
+            editorCropBox.width = Math.max(10, editorCropStart.origW + deltaX);
+            break;
+        case 'w':
+            editorCropBox.x = editorCropStart.origX + deltaX;
+            editorCropBox.width = Math.max(10, editorCropStart.origW - deltaX);
+            break;
+    }
+    
+    // 保持比例
+    if (editorCropRatio) {
+        const currentRatio = editorCropBox.width / editorCropBox.height;
+        if (currentRatio > editorCropRatio) {
+            editorCropBox.height = editorCropBox.width / editorCropRatio;
+        } else {
+            editorCropBox.width = editorCropBox.height * editorCropRatio;
+        }
+    }
+    
+    updateStandaloneCropBoxUI();
+}
+
+// 停止调整
+function stopStandaloneResizeCrop() {
+    editorResizeHandle = null;
+    document.removeEventListener('mousemove', onStandaloneResizeCrop);
+    document.removeEventListener('mouseup', stopStandaloneResizeCrop);
+}
+
+// 应用裁剪
+function applyStandaloneCrop() {
+    if (editorCropBox.width < 10 || editorCropBox.height < 10) {
+        alert('裁剪区域太小');
+        return;
+    }
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = editorCropBox.width;
+    tempCanvas.height = editorCropBox.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    tempCtx.drawImage(editorCanvas, editorCropBox.x, editorCropBox.y, editorCropBox.width, editorCropBox.height, 0, 0, editorCropBox.width, editorCropBox.height);
+    
+    // 更新canvas和currentImage
+    editorCanvas.width = editorCropBox.width;
+    editorCanvas.height = editorCropBox.height;
+    editorCtx.drawImage(tempCanvas, 0, 0);
+    
+    // 更新currentImage
+    const img = new Image();
+    img.onload = () => {
+        editorCurrentImage = img;
+        initStandaloneCropBox();
+    };
+    img.src = tempCanvas.toDataURL();
+}
+
+// 初始化调整控制
+function initStandaloneAdjustControls() {
+    const brightnessSlider = document.getElementById('brightness');
+    const contrastSlider = document.getElementById('contrast');
+    const saturationSlider = document.getElementById('saturation');
+    
+    // 滑块事件
+    brightnessSlider.addEventListener('input', (e) => {
+        editorAdjustSettings.brightness = parseInt(e.target.value);
+        document.getElementById('brightnessValue').textContent = e.target.value;
+        drawStandaloneEditorImage();
+    });
+    
+    contrastSlider.addEventListener('input', (e) => {
+        editorAdjustSettings.contrast = parseInt(e.target.value);
+        document.getElementById('contrastValue').textContent = e.target.value;
+        drawStandaloneEditorImage();
+    });
+    
+    saturationSlider.addEventListener('input', (e) => {
+        editorAdjustSettings.saturation = parseInt(e.target.value);
+        document.getElementById('saturationValue').textContent = e.target.value;
+        drawStandaloneEditorImage();
+    });
+    
+    // 效果按钮
+    document.getElementById('grayscaleEffect').addEventListener('click', () => {
+        editorAdjustSettings.grayscale = !editorAdjustSettings.grayscale;
+        drawStandaloneEditorImage();
+    });
+    
+    document.getElementById('invertEffect').addEventListener('click', () => {
+        editorAdjustSettings.invert = !editorAdjustSettings.invert;
+        drawStandaloneEditorImage();
+    });
+    
+    document.getElementById('sepiaEffect').addEventListener('click', () => {
+        editorAdjustSettings.sepia = !editorAdjustSettings.sepia;
+        drawStandaloneEditorImage();
+    });
+    
+    // 旋转和翻转
+    document.getElementById('rotateLeft').addEventListener('click', () => {
+        editorAdjustSettings.rotation = (editorAdjustSettings.rotation - 90) % 360;
+        // 交换宽高
+        const temp = editorCanvas.width;
+        editorCanvas.width = editorCanvas.height;
+        editorCanvas.height = temp;
+        drawStandaloneEditorImage();
+    });
+    
+    document.getElementById('rotateRight').addEventListener('click', () => {
+        editorAdjustSettings.rotation = (editorAdjustSettings.rotation + 90) % 360;
+        const temp = editorCanvas.width;
+        editorCanvas.width = editorCanvas.height;
+        editorCanvas.height = temp;
+        drawStandaloneEditorImage();
+    });
+    
+    document.getElementById('flipHorizontal').addEventListener('click', () => {
+        editorAdjustSettings.flipH = !editorAdjustSettings.flipH;
+        drawStandaloneEditorImage();
+    });
+    
+    document.getElementById('flipVertical').addEventListener('click', () => {
+        editorAdjustSettings.flipV = !editorAdjustSettings.flipV;
+        drawStandaloneEditorImage();
+    });
+    
+    // 应用和重置
+    document.getElementById('applyAdjust').addEventListener('click', applyStandaloneAdjustments);
+    document.getElementById('resetAdjust').addEventListener('click', resetStandaloneAdjustSettings);
+}
+
+// 应用调整
+function applyStandaloneAdjustments() {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = editorCanvas.width;
+    tempCanvas.height = editorCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(editorCanvas, 0, 0);
+    
+    const img = new Image();
+    img.onload = () => {
+        editorCurrentImage = img;
+        resetStandaloneAdjustSettings();
+        drawStandaloneEditorImage();
+    };
+    img.src = tempCanvas.toDataURL();
+}
+
+// 重置调整设置
+function resetStandaloneAdjustSettings() {
+    editorAdjustSettings.brightness = 0;
+    editorAdjustSettings.contrast = 0;
+    editorAdjustSettings.saturation = 0;
+    editorAdjustSettings.grayscale = false;
+    editorAdjustSettings.invert = false;
+    editorAdjustSettings.sepia = false;
+    editorAdjustSettings.rotation = 0;
+    editorAdjustSettings.flipH = false;
+    editorAdjustSettings.flipV = false;
+    
+    document.getElementById('brightness').value = 0;
+    document.getElementById('brightnessValue').textContent = '0';
+    document.getElementById('contrast').value = 0;
+    document.getElementById('contrastValue').textContent = '0';
+    document.getElementById('saturation').value = 0;
+    document.getElementById('saturationValue').textContent = '0';
+    
+    if (editorOriginalImage) {
+        editorCanvas.width = editorOriginalImage.width;
+        editorCanvas.height = editorOriginalImage.height;
+        editorCurrentImage = editorOriginalImage;
+        drawStandaloneEditorImage();
+    }
+}
+
+// 保存编辑
+function saveStandaloneImageEdit() {
+    // 创建新的File对象
+    editorCanvas.toBlob((blob) => {
+        const fileName = editorSelectedFiles[currentEditorIndex].file.name;
+        const newFile = new File([blob], fileName, { type: 'image/png' });
+        
+        // 更新文件列表
+        editorSelectedFiles[currentEditorIndex].file = newFile;
+        editorSelectedFiles[currentEditorIndex].editedBlob = blob;
+        editorSelectedFiles[currentEditorIndex].status = 'edited';
+        
+        // 添加到已编辑文件列表
+        if (!editorEditedFiles.some(item => item.id === editorSelectedFiles[currentEditorIndex].id)) {
+            editorEditedFiles.push(editorSelectedFiles[currentEditorIndex]);
+        }
+        
+        // 更新文件列表UI
+        updateEditorFileList();
+        
+        document.getElementById('editorWorkWindow').classList.remove('active');
+        showEditorStatus('图片已编辑', 'success');
+    }, 'image/png');
+}
+
+// 修改 init 函数，添加独立图片编辑器初始化
+const originalInit = init;
+init = function() {
+    originalInit.call(this);
+    initStandaloneImageEditor();
+};
