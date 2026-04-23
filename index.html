@@ -214,16 +214,16 @@
             </div>
             <div class="window-content">
                 <div class="editor-layout">
-                    <div class="editor-preview">
-                        <canvas id="editorCanvas" class="editor-canvas"></canvas>
-                        <div class="crop-overlay" id="cropOverlay" style="display: none;">
-                            <div class="crop-box" id="cropBox"></div>
-                        </div>
-                    </div>
                     <div class="editor-controls">
                         <div class="control-tabs">
-                            <div class="tab active" data-tab="crop">裁剪</div>
-                            <div class="tab" data-tab="adjust">调整</div>
+                            <div class="tab active" data-tab="crop">
+                                <span class="tab-icon">✂️</span>
+                                <span class="tab-text">裁剪</span>
+                            </div>
+                            <div class="tab" data-tab="adjust">
+                                <span class="tab-icon">🎨</span>
+                                <span class="tab-text">调整</span>
+                            </div>
                         </div>
                         
                         <!-- 裁剪面板 -->
@@ -292,6 +292,12 @@
                                 <button class="button" id="applyAdjust">应用调整</button>
                                 <button class="button" id="resetAdjust">重置调整</button>
                             </div>
+                        </div>
+                    </div>
+                    <div class="editor-preview">
+                        <canvas id="editorCanvas" class="editor-canvas"></canvas>
+                        <div class="crop-overlay" id="cropOverlay" style="display: none;">
+                            <div class="crop-box" id="cropBox"></div>
                         </div>
                     </div>
                 </div>
