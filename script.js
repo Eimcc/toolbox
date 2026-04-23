@@ -270,6 +270,50 @@ function initWindowControls() {
             audioConverterWindow.classList.remove('active');
         }
     });
+
+    // 添加窗口拖动功能
+    const windows = [
+        { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar') },
+        { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar') },
+        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar') }
+    ];
+
+    windows.forEach(({ window, titlebar }) => {
+        if (titlebar) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            titlebar.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // 获取当前窗口的实际位置
+                const rect = window.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                window.style.zIndex = '100'; // 确保当前窗口在最前面
+                window.style.transform = 'none'; // 移除transform以使用left和top定位
+                window.style.left = `${initialLeft}px`;
+                window.style.top = `${initialTop}px`;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                window.style.left = `${initialLeft + deltaX}px`;
+                window.style.top = `${initialTop + deltaY}px`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+    });
 }
 
 // 初始化事件监听
@@ -295,7 +339,7 @@ function initEventListeners() {
     });
 
     imageUploadArea.addEventListener('click', () => {
-        if (!imageIsConverting) {
+        if (!imageIsConverting && imageSelectedFiles.length === 0) {
             imageFileInput.click();
         }
     });
@@ -323,7 +367,7 @@ function initEventListeners() {
     });
 
     videoUploadArea.addEventListener('click', () => {
-        if (!videoIsConverting) {
+        if (!videoIsConverting && videoSelectedFiles.length === 0) {
             videoFileInput.click();
         }
     });
@@ -351,7 +395,7 @@ function initEventListeners() {
     });
 
     audioUploadArea.addEventListener('click', () => {
-        if (!audioIsConverting) {
+        if (!audioIsConverting && audioSelectedFiles.length === 0) {
             audioFileInput.click();
         }
     });
@@ -1324,8 +1368,11 @@ function downloadAllImages() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showImageStatus(`已下载 ${imageConvertedFiles.length} 张图片`, 'success');
@@ -1346,8 +1393,11 @@ function downloadAllVideos() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showVideoStatus(`已下载 ${videoConvertedFiles.length} 个视频`, 'success');
@@ -1368,8 +1418,11 @@ function downloadAllAudios() {
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟移除链接和撤销URL对象，确保下载完成
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
     
     showAudioStatus(`已下载 ${audioConvertedFiles.length} 个音频`, 'success');
@@ -1465,6 +1518,7 @@ function updateClock() {
     document.getElementById('clock').textContent = `${ampm} ${hours}:${minutes}`;
 }
 
+<<<<<<< HEAD
 // 图片编辑器相关变量
 let currentEditIndex = 0;
 let editorCanvas, editorCtx;
