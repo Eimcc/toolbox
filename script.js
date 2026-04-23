@@ -2651,40 +2651,44 @@ function initStandaloneCropControls() {
 function updateStandaloneCropBoxFromRatio() {
     if (!editorCropRatio) return;
     
-    const currentRatio = editorCropBox.width / editorCropBox.height;
-    const centerX = editorCropBox.x + editorCropBox.width / 2;
-    const centerY = editorCropBox.y + editorCropBox.height / 2;
-    
-    if (currentRatio > editorCropRatio) {
-        editorCropBox.height = editorCropBox.width / editorCropRatio;
-    } else {
-        editorCropBox.width = editorCropBox.height * editorCropRatio;
-    }
-    
-    // 检查裁剪框是否超出画布
     const canvasWidth = standaloneEditorCanvas.width;
     const canvasHeight = standaloneEditorCanvas.height;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
     
-    let scale = 1;
+    // 计算基于画布大小的初始裁剪框
+    let targetWidth = canvasWidth * 0.8;
+    let targetHeight = targetWidth / editorCropRatio;
+    
+    // 检查是否超出画布高度
+    if (targetHeight > canvasHeight) {
+        targetHeight = canvasHeight * 0.8;
+        targetWidth = targetHeight * editorCropRatio;
+    }
+    
     // 计算需要的缩放比例
-    if (editorCropBox.width > canvasWidth || editorCropBox.height > canvasHeight) {
-        const widthScale = canvasWidth / editorCropBox.width;
-        const heightScale = canvasHeight / editorCropBox.height;
+    let scale = 1;
+    if (targetWidth > canvasWidth || targetHeight > canvasHeight) {
+        const widthScale = canvasWidth / targetWidth;
+        const heightScale = canvasHeight / targetHeight;
         scale = Math.min(widthScale, heightScale) * 0.9; // 留10%的边距
     }
     
-    // 如果需要缩放
+    // 应用缩放
     if (scale < 1) {
-        // 缩放裁剪框
-        editorCropBox.width *= scale;
-        editorCropBox.height *= scale;
+        targetWidth *= scale;
+        targetHeight *= scale;
     }
     
-    // 确保裁剪框在画布内
-    editorCropBox.x = centerX - editorCropBox.width / 2;
-    editorCropBox.y = centerY - editorCropBox.height / 2;
+    // 设置裁剪框位置和大小
+    editorCropBox = {
+        x: centerX - targetWidth / 2,
+        y: centerY - targetHeight / 2,
+        width: targetWidth,
+        height: targetHeight
+    };
     
-    // 调整位置，确保裁剪框完全在画布内
+    // 确保裁剪框完全在画布内
     editorCropBox.x = Math.max(0, Math.min(canvasWidth - editorCropBox.width, editorCropBox.x));
     editorCropBox.y = Math.max(0, Math.min(canvasHeight - editorCropBox.height, editorCropBox.y));
     
