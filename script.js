@@ -2122,7 +2122,7 @@ updateImageFileList = async function() {
 let editorSelectedFiles = [];
 let editorEditedFiles = [];
 let currentEditorIndex = 0;
-let editorCanvas, editorCtx;
+let standaloneEditorCanvas, standaloneEditorCtx;
 let editorOriginalImage = null;
 let editorCurrentImage = null;
 let editorIsCropping = false;
@@ -2160,8 +2160,8 @@ function initStandaloneImageEditor() {
     const cancelEditorButton = document.getElementById('cancelEditor');
     
     // 初始化canvas
-    editorCanvas = document.getElementById('editorCanvas');
-    editorCtx = editorCanvas.getContext('2d');
+    standaloneEditorCanvas = document.getElementById('editorCanvas');
+    standaloneEditorCtx = standaloneEditorCanvas.getContext('2d');
     
     // 图片编辑器窗口控制
     imageEditorIcon.addEventListener('click', () => {
@@ -2403,8 +2403,8 @@ function openStandaloneEditor() {
         editorCurrentImage = img;
         
         // 设置canvas尺寸
-        editorCanvas.width = img.width;
-        editorCanvas.height = img.height;
+        standaloneEditorCanvas.width = img.width;
+        standaloneEditorCanvas.height = img.height;
         
         // 重置调整设置
         resetStandaloneAdjustSettings();
@@ -2426,28 +2426,28 @@ function drawStandaloneEditorImage() {
     if (!editorCurrentImage) return;
     
     // 保存当前状态
-    editorCtx.save();
+    standaloneEditorCtx.save();
     
     // 清空canvas
-    editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+    standaloneEditorCtx.clearRect(0, 0, standaloneEditorCanvas.width, standaloneEditorCanvas.height);
     
     // 应用变换
-    const centerX = editorCanvas.width / 2;
-    const centerY = editorCanvas.height / 2;
+    const centerX = standaloneEditorCanvas.width / 2;
+    const centerY = standaloneEditorCanvas.height / 2;
     
-    editorCtx.translate(centerX, centerY);
+    standaloneEditorCtx.translate(centerX, centerY);
     
     // 应用旋转
-    editorCtx.rotate((editorAdjustSettings.rotation * Math.PI) / 180);
+    standaloneEditorCtx.rotate((editorAdjustSettings.rotation * Math.PI) / 180);
     
     // 应用翻转
-    editorCtx.scale(editorAdjustSettings.flipH ? -1 : 1, editorAdjustSettings.flipV ? -1 : 1);
+    standaloneEditorCtx.scale(editorAdjustSettings.flipH ? -1 : 1, editorAdjustSettings.flipV ? -1 : 1);
     
     // 绘制图片
-    editorCtx.drawImage(editorCurrentImage, -editorCurrentImage.width / 2, -editorCurrentImage.height / 2);
+    standaloneEditorCtx.drawImage(editorCurrentImage, -editorCurrentImage.width / 2, -editorCurrentImage.height / 2);
     
     // 恢复状态
-    editorCtx.restore();
+    standaloneEditorCtx.restore();
     
     // 应用滤镜
     applyStandaloneFilters();
@@ -2483,15 +2483,15 @@ function applyStandaloneFilters() {
     
     if (filterString) {
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = editorCanvas.width;
-        tempCanvas.height = editorCanvas.height;
+        tempCanvas.width = standaloneEditorCanvas.width;
+        tempCanvas.height = standaloneEditorCanvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         
         tempCtx.filter = filterString.trim();
-        tempCtx.drawImage(editorCanvas, 0, 0);
+        tempCtx.drawImage(standaloneEditorCanvas, 0, 0);
         
-        editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
-        editorCtx.drawImage(tempCanvas, 0, 0);
+        standaloneEditorCtx.clearRect(0, 0, standaloneEditorCanvas.width, standaloneEditorCanvas.height);
+        standaloneEditorCtx.drawImage(tempCanvas, 0, 0);
     }
 }
 
@@ -2518,10 +2518,10 @@ function initStandaloneEditorTabs() {
 // 初始化裁剪框
 function initStandaloneCropBox() {
     editorCropBox = {
-        x: editorCanvas.width * 0.1,
-        y: editorCanvas.height * 0.1,
-        width: editorCanvas.width * 0.8,
-        height: editorCanvas.height * 0.8
+        x: standaloneEditorCanvas.width * 0.1,
+        y: standaloneEditorCanvas.height * 0.1,
+        width: standaloneEditorCanvas.width * 0.8,
+        height: standaloneEditorCanvas.height * 0.8
     };
     updateStandaloneCropBoxUI();
 }
@@ -2801,12 +2801,12 @@ function applyStandaloneCrop() {
     tempCanvas.height = editorCropBox.height;
     const tempCtx = tempCanvas.getContext('2d');
     
-    tempCtx.drawImage(editorCanvas, editorCropBox.x, editorCropBox.y, editorCropBox.width, editorCropBox.height, 0, 0, editorCropBox.width, editorCropBox.height);
+    tempCtx.drawImage(standaloneEditorCanvas, editorCropBox.x, editorCropBox.y, editorCropBox.width, editorCropBox.height, 0, 0, editorCropBox.width, editorCropBox.height);
     
     // 更新canvas和currentImage
-    editorCanvas.width = editorCropBox.width;
-    editorCanvas.height = editorCropBox.height;
-    editorCtx.drawImage(tempCanvas, 0, 0);
+    standaloneEditorCanvas.width = editorCropBox.width;
+    standaloneEditorCanvas.height = editorCropBox.height;
+    standaloneEditorCtx.drawImage(tempCanvas, 0, 0);
     
     // 更新currentImage
     const img = new Image();
@@ -2862,17 +2862,17 @@ function initStandaloneAdjustControls() {
     document.getElementById('rotateLeft').addEventListener('click', () => {
         editorAdjustSettings.rotation = (editorAdjustSettings.rotation - 90) % 360;
         // 交换宽高
-        const temp = editorCanvas.width;
-        editorCanvas.width = editorCanvas.height;
-        editorCanvas.height = temp;
+        const temp = standaloneEditorCanvas.width;
+        standaloneEditorCanvas.width = standaloneEditorCanvas.height;
+        standaloneEditorCanvas.height = temp;
         drawStandaloneEditorImage();
     });
     
     document.getElementById('rotateRight').addEventListener('click', () => {
         editorAdjustSettings.rotation = (editorAdjustSettings.rotation + 90) % 360;
-        const temp = editorCanvas.width;
-        editorCanvas.width = editorCanvas.height;
-        editorCanvas.height = temp;
+        const temp = standaloneEditorCanvas.width;
+        standaloneEditorCanvas.width = standaloneEditorCanvas.height;
+        standaloneEditorCanvas.height = temp;
         drawStandaloneEditorImage();
     });
     
@@ -2894,10 +2894,10 @@ function initStandaloneAdjustControls() {
 // 应用调整
 function applyStandaloneAdjustments() {
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = editorCanvas.width;
-    tempCanvas.height = editorCanvas.height;
+    tempCanvas.width = standaloneEditorCanvas.width;
+    tempCanvas.height = standaloneEditorCanvas.height;
     const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(editorCanvas, 0, 0);
+    tempCtx.drawImage(standaloneEditorCanvas, 0, 0);
     
     const img = new Image();
     img.onload = () => {
@@ -2928,8 +2928,8 @@ function resetStandaloneAdjustSettings() {
     document.getElementById('saturationValue').textContent = '0';
     
     if (editorOriginalImage) {
-        editorCanvas.width = editorOriginalImage.width;
-        editorCanvas.height = editorOriginalImage.height;
+        standaloneEditorCanvas.width = editorOriginalImage.width;
+        standaloneEditorCanvas.height = editorOriginalImage.height;
         editorCurrentImage = editorOriginalImage;
         drawStandaloneEditorImage();
     }
@@ -2938,7 +2938,7 @@ function resetStandaloneAdjustSettings() {
 // 保存编辑
 function saveStandaloneImageEdit() {
     // 创建新的File对象
-    editorCanvas.toBlob((blob) => {
+    standaloneEditorCanvas.toBlob((blob) => {
         const fileName = editorSelectedFiles[currentEditorIndex].file.name;
         const newFile = new File([blob], fileName, { type: 'image/png' });
         
