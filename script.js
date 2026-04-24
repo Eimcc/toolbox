@@ -178,55 +178,73 @@ let canvas, ctx, cropBox, imageContainer, toolPanel, toolCrop, toolAdjust, toolF
 // 窗口控制
 function initWindowControls() {
     // 图片转换器窗口控制
-    imageConverterIcon.addEventListener('click', () => {
-        imageConverterWindow.classList.add('active');
-    });
+    if (imageConverterIcon && imageConverterWindow) {
+        imageConverterIcon.addEventListener('click', () => {
+            imageConverterWindow.classList.add('active');
+        });
+    }
 
-    imageCloseButton.addEventListener('click', () => {
-        if (!imageIsConverting) {
-            imageConverterWindow.classList.remove('active');
-        }
-    });
+    if (imageCloseButton && imageConverterWindow) {
+        imageCloseButton.addEventListener('click', () => {
+            if (!imageIsConverting) {
+                imageConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
-    imageMinimizeButton.addEventListener('click', () => {
-        if (!imageIsConverting) {
-            imageConverterWindow.classList.remove('active');
-        }
-    });
+    if (imageMinimizeButton && imageConverterWindow) {
+        imageMinimizeButton.addEventListener('click', () => {
+            if (!imageIsConverting) {
+                imageConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
     // 视频转换器窗口控制
-    videoConverterIcon.addEventListener('click', () => {
-        videoConverterWindow.classList.add('active');
-    });
+    if (videoConverterIcon && videoConverterWindow) {
+        videoConverterIcon.addEventListener('click', () => {
+            videoConverterWindow.classList.add('active');
+        });
+    }
 
-    videoCloseButton.addEventListener('click', () => {
-        if (!videoIsConverting) {
-            videoConverterWindow.classList.remove('active');
-        }
-    });
+    if (videoCloseButton && videoConverterWindow) {
+        videoCloseButton.addEventListener('click', () => {
+            if (!videoIsConverting) {
+                videoConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
-    videoMinimizeButton.addEventListener('click', () => {
-        if (!videoIsConverting) {
-            videoConverterWindow.classList.remove('active');
-        }
-    });
+    if (videoMinimizeButton && videoConverterWindow) {
+        videoMinimizeButton.addEventListener('click', () => {
+            if (!videoIsConverting) {
+                videoConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
     // 音频转换器窗口控制
-    audioConverterIcon.addEventListener('click', () => {
-        audioConverterWindow.classList.add('active');
-    });
+    if (audioConverterIcon && audioConverterWindow) {
+        audioConverterIcon.addEventListener('click', () => {
+            audioConverterWindow.classList.add('active');
+        });
+    }
 
-    audioCloseButton.addEventListener('click', () => {
-        if (!audioIsConverting) {
-            audioConverterWindow.classList.remove('active');
-        }
-    });
+    if (audioCloseButton && audioConverterWindow) {
+        audioCloseButton.addEventListener('click', () => {
+            if (!audioIsConverting) {
+                audioConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
-    audioMinimizeButton.addEventListener('click', () => {
-        if (!audioIsConverting) {
-            audioConverterWindow.classList.remove('active');
-        }
-    });
+    if (audioMinimizeButton && audioConverterWindow) {
+        audioMinimizeButton.addEventListener('click', () => {
+            if (!audioIsConverting) {
+                audioConverterWindow.classList.remove('active');
+            }
+        });
+    }
 
     // 图片编辑器窗口控制
     if (imageEditorIcon) {
@@ -1485,11 +1503,19 @@ function showAudioStatus(message, type = 'info') {
 
 // 初始化
 function init() {
+    console.log('Initializing application...');
     // 初始化DOM元素引用
     initDOMElements();
+    console.log('DOMElements initialized:', {
+        imageConverterIcon: !!imageConverterIcon,
+        videoConverterIcon: !!videoConverterIcon,
+        audioConverterIcon: !!audioConverterIcon,
+        imageEditorIcon: !!imageEditorIcon
+    });
     drawDesktopBackground();
     initWindowControls();
     initEventListeners();
+    console.log('Application initialization complete!');
 }
 
 // 初始化DOM元素引用
@@ -1734,14 +1760,13 @@ function updateClock() {
     document.getElementById('clock').textContent = `${ampm} ${hours}:${minutes}`;
 }
 
-<<<<<<< HEAD
 // 图片编辑器相关变量
 let currentEditIndex = 0;
 let editorCanvas, editorCtx;
 let originalImage = null;
 let currentImage = null;
 let isCropping = false;
-let cropBox = { x: 0, y: 0, width: 0, height: 0 };
+cropBox = { x: 0, y: 0, width: 0, height: 0 };
 let cropRatio = null;
 let cropStart = null;
 let resizeHandle = null;
