@@ -167,56 +167,13 @@ let audioConvertedFiles = [];
 let audioIsConverting = false;
 
 // DOM 元素
-const imageConverterIcon = document.getElementById('imageConverterIcon');
-const imageConverterWindow = document.getElementById('imageConverterWindow');
-const imageCloseButton = document.getElementById('imageCloseButton');
-const imageMinimizeButton = document.getElementById('imageMinimizeButton');
-const imageUploadArea = document.getElementById('imageUploadArea');
-const imageUploadIcon = document.getElementById('imageUploadIcon');
-const imageUploadText = document.getElementById('imageUploadText');
-const imageFileInput = document.getElementById('imageFileInput');
-const imageFileList = document.getElementById('imageFileList');
-const imageTargetFormat = document.getElementById('imageTargetFormat');
-const imageConvertButton = document.getElementById('imageConvertButton');
-const imageDownloadButton = document.getElementById('imageDownloadButton');
-const imageResetButton = document.getElementById('imageResetButton');
-const imageStatus = document.getElementById('imageStatus');
-const imageProgressContainer = document.getElementById('imageProgressContainer');
-const imageProgressBar = document.getElementById('imageProgressBar');
-
-const videoConverterIcon = document.getElementById('videoConverterIcon');
-const videoConverterWindow = document.getElementById('videoConverterWindow');
-const videoCloseButton = document.getElementById('videoCloseButton');
-const videoMinimizeButton = document.getElementById('videoMinimizeButton');
-const videoUploadArea = document.getElementById('videoUploadArea');
-const videoUploadIcon = document.getElementById('videoUploadIcon');
-const videoUploadText = document.getElementById('videoUploadText');
-const videoFileInput = document.getElementById('videoFileInput');
-const videoFileList = document.getElementById('videoFileList');
-const videoTargetFormat = document.getElementById('videoTargetFormat');
-const videoConvertButton = document.getElementById('videoConvertButton');
-const videoDownloadButton = document.getElementById('videoDownloadButton');
-const videoResetButton = document.getElementById('videoResetButton');
-const videoStatus = document.getElementById('videoStatus');
-const videoProgressContainer = document.getElementById('videoProgressContainer');
-const videoProgressBar = document.getElementById('videoProgressBar');
-
-const audioConverterIcon = document.getElementById('audioConverterIcon');
-const audioConverterWindow = document.getElementById('audioConverterWindow');
-const audioCloseButton = document.getElementById('audioCloseButton');
-const audioMinimizeButton = document.getElementById('audioMinimizeButton');
-const audioUploadArea = document.getElementById('audioUploadArea');
-const audioUploadIcon = document.getElementById('audioUploadIcon');
-const audioUploadText = document.getElementById('audioUploadText');
-const audioFileInput = document.getElementById('audioFileInput');
-const audioFileList = document.getElementById('audioFileList');
-const audioTargetFormat = document.getElementById('audioTargetFormat');
-const audioConvertButton = document.getElementById('audioConvertButton');
-const audioDownloadButton = document.getElementById('audioDownloadButton');
-const audioResetButton = document.getElementById('audioResetButton');
-const audioStatus = document.getElementById('audioStatus');
-const audioProgressContainer = document.getElementById('audioProgressContainer');
-const audioProgressBar = document.getElementById('audioProgressBar');
+// DOM元素引用（将在initDOMElements函数中初始化）
+let imageConverterIcon, imageConverterWindow, imageCloseButton, imageMinimizeButton, imageUploadArea, imageUploadIcon, imageUploadText, imageFileInput, imageFileList, imageTargetFormat, imageConvertButton, imageDownloadButton, imageResetButton, imageStatus, imageProgressContainer, imageProgressBar;
+let videoConverterIcon, videoConverterWindow, videoCloseButton, videoMinimizeButton, videoUploadArea, videoUploadIcon, videoUploadText, videoFileInput, videoFileList, videoTargetFormat, videoConvertButton, videoDownloadButton, videoResetButton, videoStatus, videoProgressContainer, videoProgressBar;
+let audioConverterIcon, audioConverterWindow, audioCloseButton, audioMinimizeButton, audioUploadArea, audioUploadIcon, audioUploadText, audioFileInput, audioFileList, audioTargetFormat, audioConvertButton, audioDownloadButton, audioResetButton, audioStatus, audioProgressContainer, audioProgressBar;
+let imageEditorIcon, imageEditorWindow, imageEditorCloseButton, imageEditorMinimizeButton, imageEditorUploadArea, imageEditorUploadIcon, imageEditorUploadText, imageEditorFileInput, imageEditorFileList, imageEditorEditButton, imageEditorStatus, imageEditorProgressContainer, imageEditorProgressBar;
+let editWorkspaceWindow, editWorkspaceCloseButton, editWorkspaceMinimizeButton, editWorkspaceCanvas, editWorkspaceCropBox, editWorkspaceToolPanel, editWorkspaceToolCrop, editWorkspaceToolAdjust, editWorkspaceToolFilter, editWorkspaceToolRotate, editWorkspaceToolFlip, editWorkspaceToolDraw, editWorkspaceToolText, editWorkspaceToolSticker, editWorkspaceControlPanel, editWorkspaceControlCrop, editWorkspaceControlAdjust, editWorkspaceControlFilter, editWorkspaceControlRotate, editWorkspaceControlFlip, editWorkspaceControlDraw, editWorkspaceControlText, editWorkspaceControlSticker, editWorkspaceCancelButton, editWorkspaceApplyButton, editWorkspaceDownloadButton, editWorkspaceResetButton, editWorkspacePresetRatios, editWorkspaceCropWidth, editWorkspaceCropHeight, editWorkspaceCropLock, editWorkspaceCropApply, editWorkspaceCropCancel, editWorkspaceCropReset, editWorkspaceBrightness, editWorkspaceContrast, editWorkspaceSaturation, editWorkspaceSharpness, editWorkspaceAdjustApply, editWorkspaceAdjustCancel, editWorkspaceAdjustReset, editWorkspaceFilterNone, editWorkspaceFilterGrayscale, editWorkspaceFilterSepia, editWorkspaceFilterVintage, editWorkspaceFilterBlackWhite, editWorkspaceFilterInvert, editWorkspaceFilterApply, editWorkspaceFilterCancel, editWorkspaceFilterReset, editWorkspaceRotate90, editWorkspaceRotate180, editWorkspaceRotate270, editWorkspaceRotateApply, editWorkspaceRotateCancel, editWorkspaceRotateReset, editWorkspaceFlipHorizontal, editWorkspaceFlipVertical, editWorkspaceFlipApply, editWorkspaceFlipCancel, editWorkspaceFlipReset, editWorkspaceDrawColor, editWorkspaceDrawSize, editWorkspaceDrawApply, editWorkspaceDrawCancel, editWorkspaceDrawReset, editWorkspaceTextInput, editWorkspaceTextColor, editWorkspaceTextSize, editWorkspaceTextApply, editWorkspaceTextCancel, editWorkspaceTextReset, editWorkspaceStickerSelect, editWorkspaceStickerSize, editWorkspaceStickerApply, editWorkspaceStickerCancel, editWorkspaceStickerReset;
+let canvas, ctx, cropBox, imageContainer, toolPanel, toolCrop, toolAdjust, toolFilter, toolRotate, toolFlip, toolDraw, toolText, toolSticker, controlPanel, controlCrop, controlAdjust, controlFilter, controlRotate, controlFlip, controlDraw, controlText, controlSticker, cancelButton, applyButton, downloadButton, resetButton, presetRatios, cropWidth, cropHeight, cropLock, cropApply, cropCancel, cropReset, brightness, contrast, saturation, sharpness, adjustApply, adjustCancel, adjustReset, filterNone, filterGrayscale, filterSepia, filterVintage, filterBlackWhite, filterInvert, filterApply, filterCancel, filterReset, rotate90, rotate180, rotate270, rotateApply, rotateCancel, rotateReset, flipHorizontal, flipVertical, flipApply, flipCancel, flipReset, drawColor, drawSize, drawApply, drawCancel, drawReset, textInput, textColor, textSize, textApply, textCancel, textReset, stickerSelect, stickerSize, stickerApply, stickerCancel, stickerReset;
 
 // 窗口控制
 function initWindowControls() {
@@ -1502,9 +1459,242 @@ function showAudioStatus(message, type = 'info') {
 
 // 初始化
 function init() {
+    // 初始化DOM元素引用
+    initDOMElements();
     drawDesktopBackground();
     initWindowControls();
     initEventListeners();
+}
+
+// 初始化DOM元素引用
+function initDOMElements() {
+    // 图片转换器元素
+    imageConverterIcon = document.getElementById('imageConverterIcon');
+    imageConverterWindow = document.getElementById('imageConverterWindow');
+    imageCloseButton = document.getElementById('imageCloseButton');
+    imageMinimizeButton = document.getElementById('imageMinimizeButton');
+    imageUploadArea = document.getElementById('imageUploadArea');
+    imageUploadIcon = document.getElementById('imageUploadIcon');
+    imageUploadText = document.getElementById('imageUploadText');
+    imageFileInput = document.getElementById('imageFileInput');
+    imageFileList = document.getElementById('imageFileList');
+    imageTargetFormat = document.getElementById('imageTargetFormat');
+    imageConvertButton = document.getElementById('imageConvertButton');
+    imageDownloadButton = document.getElementById('imageDownloadButton');
+    imageResetButton = document.getElementById('imageResetButton');
+    imageStatus = document.getElementById('imageStatus');
+    imageProgressContainer = document.getElementById('imageProgressContainer');
+    imageProgressBar = document.getElementById('imageProgressBar');
+
+    // 视频转换器元素
+    videoConverterIcon = document.getElementById('videoConverterIcon');
+    videoConverterWindow = document.getElementById('videoConverterWindow');
+    videoCloseButton = document.getElementById('videoCloseButton');
+    videoMinimizeButton = document.getElementById('videoMinimizeButton');
+    videoUploadArea = document.getElementById('videoUploadArea');
+    videoUploadIcon = document.getElementById('videoUploadIcon');
+    videoUploadText = document.getElementById('videoUploadText');
+    videoFileInput = document.getElementById('videoFileInput');
+    videoFileList = document.getElementById('videoFileList');
+    videoTargetFormat = document.getElementById('videoTargetFormat');
+    videoConvertButton = document.getElementById('videoConvertButton');
+    videoDownloadButton = document.getElementById('videoDownloadButton');
+    videoResetButton = document.getElementById('videoResetButton');
+    videoStatus = document.getElementById('videoStatus');
+    videoProgressContainer = document.getElementById('videoProgressContainer');
+    videoProgressBar = document.getElementById('videoProgressBar');
+
+    // 音频转换器元素
+    audioConverterIcon = document.getElementById('audioConverterIcon');
+    audioConverterWindow = document.getElementById('audioConverterWindow');
+    audioCloseButton = document.getElementById('audioCloseButton');
+    audioMinimizeButton = document.getElementById('audioMinimizeButton');
+    audioUploadArea = document.getElementById('audioUploadArea');
+    audioUploadIcon = document.getElementById('audioUploadIcon');
+    audioUploadText = document.getElementById('audioUploadText');
+    audioFileInput = document.getElementById('audioFileInput');
+    audioFileList = document.getElementById('audioFileList');
+    audioTargetFormat = document.getElementById('audioTargetFormat');
+    audioConvertButton = document.getElementById('audioConvertButton');
+    audioDownloadButton = document.getElementById('audioDownloadButton');
+    audioResetButton = document.getElementById('audioResetButton');
+    audioStatus = document.getElementById('audioStatus');
+    audioProgressContainer = document.getElementById('audioProgressContainer');
+    audioProgressBar = document.getElementById('audioProgressBar');
+
+    // 图片编辑器元素
+    imageEditorIcon = document.getElementById('imageEditorIcon');
+    imageEditorWindow = document.getElementById('imageEditorWindow');
+    imageEditorCloseButton = document.getElementById('imageEditorCloseButton');
+    imageEditorMinimizeButton = document.getElementById('imageEditorMinimizeButton');
+    imageEditorUploadArea = document.getElementById('imageEditorUploadArea');
+    imageEditorUploadIcon = document.getElementById('imageEditorUploadIcon');
+    imageEditorUploadText = document.getElementById('imageEditorUploadText');
+    imageEditorFileInput = document.getElementById('imageEditorFileInput');
+    imageEditorFileList = document.getElementById('imageEditorFileList');
+    imageEditorEditButton = document.getElementById('imageEditorEditButton');
+    imageEditorStatus = document.getElementById('imageEditorStatus');
+    imageEditorProgressContainer = document.getElementById('imageEditorProgressContainer');
+    imageEditorProgressBar = document.getElementById('imageEditorProgressBar');
+
+    // 编辑工作区元素
+    editWorkspaceWindow = document.getElementById('editWorkspaceWindow');
+    editWorkspaceCloseButton = document.getElementById('editWorkspaceCloseButton');
+    editWorkspaceMinimizeButton = document.getElementById('editWorkspaceMinimizeButton');
+    editWorkspaceCanvas = document.getElementById('editWorkspaceCanvas');
+    editWorkspaceCropBox = document.getElementById('editWorkspaceCropBox');
+    editWorkspaceToolPanel = document.getElementById('editWorkspaceToolPanel');
+    editWorkspaceToolCrop = document.getElementById('editWorkspaceToolCrop');
+    editWorkspaceToolAdjust = document.getElementById('editWorkspaceToolAdjust');
+    editWorkspaceToolFilter = document.getElementById('editWorkspaceToolFilter');
+    editWorkspaceToolRotate = document.getElementById('editWorkspaceToolRotate');
+    editWorkspaceToolFlip = document.getElementById('editWorkspaceToolFlip');
+    editWorkspaceToolDraw = document.getElementById('editWorkspaceToolDraw');
+    editWorkspaceToolText = document.getElementById('editWorkspaceToolText');
+    editWorkspaceToolSticker = document.getElementById('editWorkspaceToolSticker');
+    editWorkspaceControlPanel = document.getElementById('editWorkspaceControlPanel');
+    editWorkspaceControlCrop = document.getElementById('editWorkspaceControlCrop');
+    editWorkspaceControlAdjust = document.getElementById('editWorkspaceControlAdjust');
+    editWorkspaceControlFilter = document.getElementById('editWorkspaceControlFilter');
+    editWorkspaceControlRotate = document.getElementById('editWorkspaceControlRotate');
+    editWorkspaceControlFlip = document.getElementById('editWorkspaceControlFlip');
+    editWorkspaceControlDraw = document.getElementById('editWorkspaceControlDraw');
+    editWorkspaceControlText = document.getElementById('editWorkspaceControlText');
+    editWorkspaceControlSticker = document.getElementById('editWorkspaceControlSticker');
+    editWorkspaceCancelButton = document.getElementById('editWorkspaceCancelButton');
+    editWorkspaceApplyButton = document.getElementById('editWorkspaceApplyButton');
+    editWorkspaceDownloadButton = document.getElementById('editWorkspaceDownloadButton');
+    editWorkspaceResetButton = document.getElementById('editWorkspaceResetButton');
+    editWorkspacePresetRatios = document.getElementById('editWorkspacePresetRatios');
+    editWorkspaceCropWidth = document.getElementById('editWorkspaceCropWidth');
+    editWorkspaceCropHeight = document.getElementById('editWorkspaceCropHeight');
+    editWorkspaceCropLock = document.getElementById('editWorkspaceCropLock');
+    editWorkspaceCropApply = document.getElementById('editWorkspaceCropApply');
+    editWorkspaceCropCancel = document.getElementById('editWorkspaceCropCancel');
+    editWorkspaceCropReset = document.getElementById('editWorkspaceCropReset');
+    editWorkspaceBrightness = document.getElementById('editWorkspaceBrightness');
+    editWorkspaceContrast = document.getElementById('editWorkspaceContrast');
+    editWorkspaceSaturation = document.getElementById('editWorkspaceSaturation');
+    editWorkspaceSharpness = document.getElementById('editWorkspaceSharpness');
+    editWorkspaceAdjustApply = document.getElementById('editWorkspaceAdjustApply');
+    editWorkspaceAdjustCancel = document.getElementById('editWorkspaceAdjustCancel');
+    editWorkspaceAdjustReset = document.getElementById('editWorkspaceAdjustReset');
+    editWorkspaceFilterNone = document.getElementById('editWorkspaceFilterNone');
+    editWorkspaceFilterGrayscale = document.getElementById('editWorkspaceFilterGrayscale');
+    editWorkspaceFilterSepia = document.getElementById('editWorkspaceFilterSepia');
+    editWorkspaceFilterVintage = document.getElementById('editWorkspaceFilterVintage');
+    editWorkspaceFilterBlackWhite = document.getElementById('editWorkspaceFilterBlackWhite');
+    editWorkspaceFilterInvert = document.getElementById('editWorkspaceFilterInvert');
+    editWorkspaceFilterApply = document.getElementById('editWorkspaceFilterApply');
+    editWorkspaceFilterCancel = document.getElementById('editWorkspaceFilterCancel');
+    editWorkspaceFilterReset = document.getElementById('editWorkspaceFilterReset');
+    editWorkspaceRotate90 = document.getElementById('editWorkspaceRotate90');
+    editWorkspaceRotate180 = document.getElementById('editWorkspaceRotate180');
+    editWorkspaceRotate270 = document.getElementById('editWorkspaceRotate270');
+    editWorkspaceRotateApply = document.getElementById('editWorkspaceRotateApply');
+    editWorkspaceRotateCancel = document.getElementById('editWorkspaceRotateCancel');
+    editWorkspaceRotateReset = document.getElementById('editWorkspaceRotateReset');
+    editWorkspaceFlipHorizontal = document.getElementById('editWorkspaceFlipHorizontal');
+    editWorkspaceFlipVertical = document.getElementById('editWorkspaceFlipVertical');
+    editWorkspaceFlipApply = document.getElementById('editWorkspaceFlipApply');
+    editWorkspaceFlipCancel = document.getElementById('editWorkspaceFlipCancel');
+    editWorkspaceFlipReset = document.getElementById('editWorkspaceFlipReset');
+    editWorkspaceDrawColor = document.getElementById('editWorkspaceDrawColor');
+    editWorkspaceDrawSize = document.getElementById('editWorkspaceDrawSize');
+    editWorkspaceDrawApply = document.getElementById('editWorkspaceDrawApply');
+    editWorkspaceDrawCancel = document.getElementById('editWorkspaceDrawCancel');
+    editWorkspaceDrawReset = document.getElementById('editWorkspaceDrawReset');
+    editWorkspaceTextInput = document.getElementById('editWorkspaceTextInput');
+    editWorkspaceTextColor = document.getElementById('editWorkspaceTextColor');
+    editWorkspaceTextSize = document.getElementById('editWorkspaceTextSize');
+    editWorkspaceTextApply = document.getElementById('editWorkspaceTextApply');
+    editWorkspaceTextCancel = document.getElementById('editWorkspaceTextCancel');
+    editWorkspaceTextReset = document.getElementById('editWorkspaceTextReset');
+    editWorkspaceStickerSelect = document.getElementById('editWorkspaceStickerSelect');
+    editWorkspaceStickerSize = document.getElementById('editWorkspaceStickerSize');
+    editWorkspaceStickerApply = document.getElementById('editWorkspaceStickerApply');
+    editWorkspaceStickerCancel = document.getElementById('editWorkspaceStickerCancel');
+    editWorkspaceStickerReset = document.getElementById('editWorkspaceStickerReset');
+
+    // 独立编辑器元素
+    canvas = document.getElementById('canvas');
+    if (canvas) {
+        ctx = canvas.getContext('2d');
+    }
+    cropBox = document.getElementById('cropBox');
+    imageContainer = document.getElementById('imageContainer');
+    toolPanel = document.getElementById('toolPanel');
+    toolCrop = document.getElementById('toolCrop');
+    toolAdjust = document.getElementById('toolAdjust');
+    toolFilter = document.getElementById('toolFilter');
+    toolRotate = document.getElementById('toolRotate');
+    toolFlip = document.getElementById('toolFlip');
+    toolDraw = document.getElementById('toolDraw');
+    toolText = document.getElementById('toolText');
+    toolSticker = document.getElementById('toolSticker');
+    controlPanel = document.getElementById('controlPanel');
+    controlCrop = document.getElementById('controlCrop');
+    controlAdjust = document.getElementById('controlAdjust');
+    controlFilter = document.getElementById('controlFilter');
+    controlRotate = document.getElementById('controlRotate');
+    controlFlip = document.getElementById('controlFlip');
+    controlDraw = document.getElementById('controlDraw');
+    controlText = document.getElementById('controlText');
+    controlSticker = document.getElementById('controlSticker');
+    cancelButton = document.getElementById('cancelButton');
+    applyButton = document.getElementById('applyButton');
+    downloadButton = document.getElementById('downloadButton');
+    resetButton = document.getElementById('resetButton');
+    presetRatios = document.getElementById('presetRatios');
+    cropWidth = document.getElementById('cropWidth');
+    cropHeight = document.getElementById('cropHeight');
+    cropLock = document.getElementById('cropLock');
+    cropApply = document.getElementById('cropApply');
+    cropCancel = document.getElementById('cropCancel');
+    cropReset = document.getElementById('cropReset');
+    brightness = document.getElementById('brightness');
+    contrast = document.getElementById('contrast');
+    saturation = document.getElementById('saturation');
+    sharpness = document.getElementById('sharpness');
+    adjustApply = document.getElementById('adjustApply');
+    adjustCancel = document.getElementById('adjustCancel');
+    adjustReset = document.getElementById('adjustReset');
+    filterNone = document.getElementById('filterNone');
+    filterGrayscale = document.getElementById('filterGrayscale');
+    filterSepia = document.getElementById('filterSepia');
+    filterVintage = document.getElementById('filterVintage');
+    filterBlackWhite = document.getElementById('filterBlackWhite');
+    filterInvert = document.getElementById('filterInvert');
+    filterApply = document.getElementById('filterApply');
+    filterCancel = document.getElementById('filterCancel');
+    filterReset = document.getElementById('filterReset');
+    rotate90 = document.getElementById('rotate90');
+    rotate180 = document.getElementById('rotate180');
+    rotate270 = document.getElementById('rotate270');
+    rotateApply = document.getElementById('rotateApply');
+    rotateCancel = document.getElementById('rotateCancel');
+    rotateReset = document.getElementById('rotateReset');
+    flipHorizontal = document.getElementById('flipHorizontal');
+    flipVertical = document.getElementById('flipVertical');
+    flipApply = document.getElementById('flipApply');
+    flipCancel = document.getElementById('flipCancel');
+    flipReset = document.getElementById('flipReset');
+    drawColor = document.getElementById('drawColor');
+    drawSize = document.getElementById('drawSize');
+    drawApply = document.getElementById('drawApply');
+    drawCancel = document.getElementById('drawCancel');
+    drawReset = document.getElementById('drawReset');
+    textInput = document.getElementById('textInput');
+    textColor = document.getElementById('textColor');
+    textSize = document.getElementById('textSize');
+    textApply = document.getElementById('textApply');
+    textCancel = document.getElementById('textCancel');
+    textReset = document.getElementById('textReset');
+    stickerSelect = document.getElementById('stickerSelect');
+    stickerSize = document.getElementById('stickerSize');
+    stickerApply = document.getElementById('stickerApply');
+    stickerCancel = document.getElementById('stickerCancel');
+    stickerReset = document.getElementById('stickerReset');
 }
 
 // 更新时钟
