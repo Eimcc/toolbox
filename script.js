@@ -3454,33 +3454,34 @@ function initTaskbarLabels(windows) {
     function updateTaskbarLabel(window, name, isActive) {
         let label = document.querySelector(`.taskbar-item[data-window-id="${window.id}"]`);
 
+        // 确保任务栏标签始终存在
+        if (!label) {
+            // 创建新的任务栏标签
+            label = document.createElement('div');
+            label.className = 'taskbar-item';
+            label.setAttribute('data-window-id', window.id);
+            label.textContent = name;
+            
+            // 添加点击事件
+            label.addEventListener('click', () => {
+                if (window.classList.contains('active')) {
+                    window.classList.remove('active');
+                } else {
+                    window.classList.add('active');
+                    bringWindowToFront(window);
+                }
+            });
+            
+            taskbarItems.appendChild(label);
+        }
+
+        // 根据窗口状态更新标签样式
         if (isActive) {
-            if (!label) {
-                // 创建新的任务栏标签
-                label = document.createElement('div');
-                label.className = 'taskbar-item';
-                label.setAttribute('data-window-id', window.id);
-                label.textContent = name;
-                
-                // 添加点击事件
-                label.addEventListener('click', () => {
-                    if (window.classList.contains('active')) {
-                        window.classList.remove('active');
-                    } else {
-                        window.classList.add('active');
-                        bringWindowToFront(window);
-                    }
-                });
-                
-                taskbarItems.appendChild(label);
-            }
             // 激活状态的标签
             label.classList.add('active');
         } else {
-            if (label) {
-                // 非激活状态，移除任务栏标签
-                taskbarItems.removeChild(label);
-            }
+            // 非激活状态的标签
+            label.classList.remove('active');
         }
     }
 }
