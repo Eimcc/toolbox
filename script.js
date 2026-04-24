@@ -181,6 +181,7 @@ function initWindowControls() {
     if (imageConverterIcon && imageConverterWindow) {
         imageConverterIcon.addEventListener('click', () => {
             imageConverterWindow.classList.add('active');
+            bringWindowToFront(imageConverterWindow);
         });
     }
 
@@ -204,6 +205,7 @@ function initWindowControls() {
     if (videoConverterIcon && videoConverterWindow) {
         videoConverterIcon.addEventListener('click', () => {
             videoConverterWindow.classList.add('active');
+            bringWindowToFront(videoConverterWindow);
         });
     }
 
@@ -227,6 +229,7 @@ function initWindowControls() {
     if (audioConverterIcon && audioConverterWindow) {
         audioConverterIcon.addEventListener('click', () => {
             audioConverterWindow.classList.add('active');
+            bringWindowToFront(audioConverterWindow);
         });
     }
 
@@ -251,6 +254,7 @@ function initWindowControls() {
         imageEditorIcon.addEventListener('click', () => {
             if (imageEditorWindow) {
                 imageEditorWindow.classList.add('active');
+                bringWindowToFront(imageEditorWindow);
             }
         });
 
@@ -297,7 +301,8 @@ function initWindowControls() {
                 initialLeft = rect.left;
                 initialTop = rect.top;
                 
-                window.style.zIndex = '100'; // 确保当前窗口在最前面
+                // 确保当前窗口在最前面
+                bringWindowToFront(window);
                 window.style.transform = 'none'; // 移除transform以使用left和top定位
                 window.style.left = `${initialLeft}px`;
                 window.style.top = `${initialTop}px`;
@@ -3393,6 +3398,24 @@ if (document.readyState === 'loading') {
     init();
 }
 
+// 窗口管理功能
+function bringWindowToFront(windowElement) {
+    if (!windowElement) return;
+    
+    // 获取所有窗口元素
+    const allWindows = document.querySelectorAll('.window');
+    
+    // 将所有窗口的z-index设置为默认值
+    allWindows.forEach(win => {
+        if (win !== windowElement) {
+            win.style.zIndex = '10';
+        }
+    });
+    
+    // 将当前窗口的z-index设置为最高
+    windowElement.style.zIndex = '100';
+}
+
 // 任务栏标签功能
 function initTaskbarLabels(windows) {
     const taskbarItems = document.getElementById('taskbarItems');
@@ -3445,6 +3468,7 @@ function initTaskbarLabels(windows) {
                         window.classList.remove('active');
                     } else {
                         window.classList.add('active');
+                        bringWindowToFront(window);
                     }
                 });
                 
