@@ -228,11 +228,37 @@ function initWindowControls() {
         }
     });
 
+    // 图片编辑器窗口控制
+    if (imageEditorIcon) {
+        imageEditorIcon.addEventListener('click', () => {
+            if (imageEditorWindow) {
+                imageEditorWindow.classList.add('active');
+            }
+        });
+
+        if (imageEditorCloseButton) {
+            imageEditorCloseButton.addEventListener('click', () => {
+                if (imageEditorWindow) {
+                    imageEditorWindow.classList.remove('active');
+                }
+            });
+        }
+
+        if (imageEditorMinimizeButton) {
+            imageEditorMinimizeButton.addEventListener('click', () => {
+                if (imageEditorWindow) {
+                    imageEditorWindow.classList.remove('active');
+                }
+            });
+        }
+    }
+
     // 添加窗口拖动功能
     const windows = [
         { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar') },
         { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar') },
-        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar') }
+        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar') },
+        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar') }
     ];
 
     windows.forEach(({ window, titlebar }) => {
@@ -1526,7 +1552,7 @@ function initDOMElements() {
     imageEditorIcon = document.getElementById('imageEditorIcon');
     imageEditorWindow = document.getElementById('imageEditorWindow');
     imageEditorCloseButton = document.getElementById('imageEditorCloseButton');
-    imageEditorMinimizeButton = document.getElementById('imageEditorMinimizeButton');
+    imageEditorMinimizeButton = document.getElementById('imageEditorMinButton');
     imageEditorUploadArea = document.getElementById('imageEditorUploadArea');
     imageEditorUploadIcon = document.getElementById('imageEditorUploadIcon');
     imageEditorUploadText = document.getElementById('imageEditorUploadText');
