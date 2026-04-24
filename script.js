@@ -273,11 +273,14 @@ function initWindowControls() {
 
     // 添加窗口拖动功能
     const windows = [
-        { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar') },
-        { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar') },
-        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar') },
-        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar') }
+        { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar'), name: '图片格式转换器' },
+        { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar'), name: '视频格式转换器' },
+        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar'), name: '音频格式转换器' },
+        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar'), name: '图片编辑器' }
     ];
+
+    // 初始化任务栏标签功能
+    initTaskbarLabels(windows);
 
     windows.forEach(({ window, titlebar }) => {
         if (titlebar) {
@@ -3388,6 +3391,74 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
+}
+
+// 任务栏标签功能
+function initTaskbarLabels(windows) {
+    const taskbarItems = document.getElementById('taskbarItems');
+    if (!taskbarItems) return;
+
+    // 为每个窗口创建任务栏标签
+    windows.forEach(({ window, name }) => {
+        if (!window) return;
+
+        // 监听窗口显示/隐藏事件
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const isActive = window.classList.contains('active');
+                    updateTaskbarLabel(window, name, isActive);
+                }
+            });
+        });
+
+        observer.observe(window, { attributes: true });
+
+        // 初始化时检查窗口状态
+        const isActive = window.classList.contains('active');
+        updateTaskbarLabel(window, name, isActive);
+
+        // 点击窗口标题栏时，也更新任务栏标签
+        const titlebar = window.querySelector('.window-titlebar');
+        if (titlebar) {
+            titlebar.addEventListener('mousedown', () => {
+                window.classList.add('active');
+            });
+        }
+    });
+
+    // 更新任务栏标签
+    function updateTaskbarLabel(window, name, isActive) {
+        let label = document.querySelector(`.taskbar-item[data-window-id="${window.id}"]`);
+
+        if (isActive) {
+            if (!label) {
+                // 创建新的任务栏标签
+                label = document.createElement('div');
+                label.className = 'taskbar-item';
+                label.setAttribute('data-window-id', window.id);
+                label.textContent = name;
+                
+                // 添加点击事件
+                label.addEventListener('click', () => {
+                    if (window.classList.contains('active')) {
+                        window.classList.remove('active');
+                    } else {
+                        window.classList.add('active');
+                    }
+                });
+                
+                taskbarItems.appendChild(label);
+            }
+            // 激活状态的标签
+            label.classList.add('active');
+        } else {
+            if (label) {
+                // 非激活状态的标签
+                label.classList.remove('active');
+            }
+        }
+    }
 }
 
 // 启动时钟更新

@@ -469,6 +469,30 @@ body {
     padding: 0 4px;
     height: 100%;
     align-items: center;
+    overflow-x: auto;
+}
+
+.taskbar-item {
+    cursor: pointer;
+    padding: 4px 12px;
+    margin: 0 1px;
+    background: #c0c0c0;
+    border: 1px solid #000;
+    border-radius: 2px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    white-space: nowrap;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.taskbar-item:hover {
+    background: #d0d0d0;
+}
+
+.taskbar-item.active {
+    background: #000080;
+    color: #fff;
 }
 
 .system-tray {
