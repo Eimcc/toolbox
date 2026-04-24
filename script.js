@@ -3478,8 +3478,8 @@ function initTaskbarLabels(windows) {
             label.classList.add('active');
         } else {
             if (label) {
-                // 非激活状态的标签
-                label.classList.remove('active');
+                // 非激活状态，移除任务栏标签
+                taskbarItems.removeChild(label);
             }
         }
     }
