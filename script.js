@@ -181,6 +181,7 @@ function initWindowControls() {
     if (imageConverterIcon && imageConverterWindow) {
         imageConverterIcon.addEventListener('click', () => {
             imageConverterWindow.classList.add('active');
+            imageConverterWindow.classList.remove('minimized');
             bringWindowToFront(imageConverterWindow);
         });
     }
@@ -189,6 +190,7 @@ function initWindowControls() {
         imageCloseButton.addEventListener('click', () => {
             if (!imageIsConverting) {
                 imageConverterWindow.classList.remove('active');
+                imageConverterWindow.classList.remove('minimized');
             }
         });
     }
@@ -197,6 +199,7 @@ function initWindowControls() {
         imageMinimizeButton.addEventListener('click', () => {
             if (!imageIsConverting) {
                 imageConverterWindow.classList.remove('active');
+                imageConverterWindow.classList.add('minimized');
             }
         });
     }
@@ -205,6 +208,7 @@ function initWindowControls() {
     if (videoConverterIcon && videoConverterWindow) {
         videoConverterIcon.addEventListener('click', () => {
             videoConverterWindow.classList.add('active');
+            videoConverterWindow.classList.remove('minimized');
             bringWindowToFront(videoConverterWindow);
         });
     }
@@ -213,6 +217,7 @@ function initWindowControls() {
         videoCloseButton.addEventListener('click', () => {
             if (!videoIsConverting) {
                 videoConverterWindow.classList.remove('active');
+                videoConverterWindow.classList.remove('minimized');
             }
         });
     }
@@ -221,6 +226,7 @@ function initWindowControls() {
         videoMinimizeButton.addEventListener('click', () => {
             if (!videoIsConverting) {
                 videoConverterWindow.classList.remove('active');
+                videoConverterWindow.classList.add('minimized');
             }
         });
     }
@@ -229,6 +235,7 @@ function initWindowControls() {
     if (audioConverterIcon && audioConverterWindow) {
         audioConverterIcon.addEventListener('click', () => {
             audioConverterWindow.classList.add('active');
+            audioConverterWindow.classList.remove('minimized');
             bringWindowToFront(audioConverterWindow);
         });
     }
@@ -237,6 +244,7 @@ function initWindowControls() {
         audioCloseButton.addEventListener('click', () => {
             if (!audioIsConverting) {
                 audioConverterWindow.classList.remove('active');
+                audioConverterWindow.classList.remove('minimized');
             }
         });
     }
@@ -245,6 +253,7 @@ function initWindowControls() {
         audioMinimizeButton.addEventListener('click', () => {
             if (!audioIsConverting) {
                 audioConverterWindow.classList.remove('active');
+                audioConverterWindow.classList.add('minimized');
             }
         });
     }
@@ -254,6 +263,7 @@ function initWindowControls() {
         imageEditorIcon.addEventListener('click', () => {
             if (imageEditorWindow) {
                 imageEditorWindow.classList.add('active');
+                imageEditorWindow.classList.remove('minimized');
                 bringWindowToFront(imageEditorWindow);
             }
         });
@@ -262,6 +272,7 @@ function initWindowControls() {
             imageEditorCloseButton.addEventListener('click', () => {
                 if (imageEditorWindow) {
                     imageEditorWindow.classList.remove('active');
+                    imageEditorWindow.classList.remove('minimized');
                 }
             });
         }
@@ -270,6 +281,7 @@ function initWindowControls() {
             imageEditorMinimizeButton.addEventListener('click', () => {
                 if (imageEditorWindow) {
                     imageEditorWindow.classList.remove('active');
+                    imageEditorWindow.classList.add('minimized');
                 }
             });
         }
@@ -3425,7 +3437,7 @@ function initTaskbarLabels(windows) {
     windows.forEach(({ window, name }) => {
         if (!window) return;
 
-        // 监听窗口显示/隐藏事件
+        // 监听窗口显示/隐藏/最小化事件
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
@@ -3452,10 +3464,12 @@ function initTaskbarLabels(windows) {
 
     // 更新任务栏标签
     function updateTaskbarLabel(window, name, isActive) {
+        const isMinimized = window.classList.contains('minimized');
+        const isWindowOpen = isActive || isMinimized;
         let label = document.querySelector(`.taskbar-item[data-window-id="${window.id}"]`);
 
-        if (isActive) {
-            // 窗口打开时，显示任务栏标签
+        if (isWindowOpen) {
+            // 窗口打开或最小化时，显示任务栏标签
             if (!label) {
                 // 创建新的任务栏标签
                 label = document.createElement('div');
@@ -3467,16 +3481,25 @@ function initTaskbarLabels(windows) {
                 label.addEventListener('click', () => {
                     if (window.classList.contains('active')) {
                         window.classList.remove('active');
+                        window.classList.add('minimized');
                     } else {
                         window.classList.add('active');
+                        window.classList.remove('minimized');
                         bringWindowToFront(window);
                     }
                 });
                 
                 taskbarItems.appendChild(label);
             }
-            // 激活状态的标签
-            label.classList.add('active');
+            
+            // 更新标签状态
+            if (isActive) {
+                // 激活状态的标签
+                label.classList.add('active');
+            } else {
+                // 最小化状态的标签
+                label.classList.remove('active');
+            }
         } else {
             // 窗口关闭时，移除任务栏标签
             if (label) {
