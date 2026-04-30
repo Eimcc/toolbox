@@ -3816,7 +3816,11 @@ async function generateLivePhotoFromFrames() {
         progressBar.style.width = '30%';
         showLivePhotoStatus('正在生成动画...', 'info');
         
-        if (outputFormat === 'gif') {
+        if (outputFormat === 'xiaohongshu') {
+            livePhotoGeneratedBlob = await generateXiaoHongShuGIF(images, (progress) => {
+                progressBar.style.width = `${30 + progress * 60}%`;
+            });
+        } else if (outputFormat === 'gif') {
             livePhotoGeneratedBlob = await generateGIF(images, fps, loop, (progress) => {
                 progressBar.style.width = `${30 + progress * 60}%`;
             });
@@ -3899,6 +3903,69 @@ async function generateGIF(images, fps, loop, onProgress) {
     encoder.finish();
     
     return new Blob([encoder.output()], { type: 'image/gif' });
+}
+
+async function generateXiaoHongShuGIF(images, onProgress) {
+    const maxSize = 1080;
+    const targetFps = 10;
+    
+    let width = Math.max(...images.map(img => img.width));
+    let height = Math.max(...images.map(img => img.height));
+    
+    if (width > maxSize || height > maxSize) {
+        const ratio = Math.min(maxSize / width, maxSize / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+    }
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    const processedImages = [];
+    
+    for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        const scale = Math.min(width / img.width, height / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const x = (width - scaledWidth) / 2;
+        const y = (height - scaledHeight) / 2;
+        
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+        
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        const processedImg = new Image();
+        processedImg.src = URL.createObjectURL(blob);
+        await new Promise(r => processedImg.onload = r);
+        processedImages.push(processedImg);
+        
+        onProgress(i / images.length * 0.5);
+    }
+    
+    const encoder = new GIFEncoder(width, height);
+    encoder.setRepeat(0);
+    encoder.setDelay(Math.round(1000 / targetFps));
+    encoder.start();
+    
+    for (let i = 0; i < processedImages.length; i++) {
+        ctx.drawImage(processedImages[i], 0, 0);
+        encoder.addFrame(ctx);
+        onProgress(0.5 + i / processedImages.length * 0.5);
+    }
+    
+    encoder.finish();
+    
+    const gifBlob = new Blob([encoder.output()], { type: 'image/gif' });
+    
+    processedImages.forEach(img => URL.revokeObjectURL(img.src));
+    
+    return gifBlob;
 }
 
 async function generateWebP(images, fps, loop, onProgress) {
@@ -4481,7 +4548,11 @@ async function generateLivePhotoFromVideo() {
         progressBar.style.width = '60%';
         showLivePhotoStatus('正在生成...', 'info');
         
-        if (outputFormat === 'livephoto') {
+        if (outputFormat === 'xiaohongshu') {
+            livePhotoGeneratedBlob = await generateXiaoHongShuGIF(frames, (progress) => {
+                progressBar.style.width = `${60 + progress * 35}%`;
+            });
+        } else if (outputFormat === 'livephoto') {
             livePhotoGeneratedBlob = await generateLivePhotoFormat(frames, fps, (progress) => {
                 progressBar.style.width = `${60 + progress * 35}%`;
             });
@@ -4586,7 +4657,16 @@ function downloadLivePhoto() {
         const url = URL.createObjectURL(livePhotoGeneratedBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `live_photo.${format === 'gif' ? 'gif' : 'webp'}`;
+        
+        const isXiaoHongShu = document.getElementById('livePhotoOutputFormat').value === 'xiaohongshu' || 
+                            document.getElementById('livePhotoVideoOutputFormat').value === 'xiaohongshu';
+        
+        if (isXiaoHongShu) {
+            a.download = 'xiaohongshu_live.gif';
+        } else {
+            a.download = `live_photo.${format === 'gif' ? 'gif' : 'webp'}`;
+        }
+        
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -4595,7 +4675,11 @@ function downloadLivePhoto() {
             URL.revokeObjectURL(url);
         }, 100);
         
-        showLivePhotoStatus(`已下载 ${format.toUpperCase()} 文件`, 'success');
+        if (isXiaoHongShu) {
+            showLivePhotoStatus('已下载小红书 Live 图格式 (GIF)\n可以直接上传到小红书使用', 'success');
+        } else {
+            showLivePhotoStatus(`已下载 ${format.toUpperCase()} 文件`, 'success');
+        }
     }
 }
 
