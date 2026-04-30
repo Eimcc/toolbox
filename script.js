@@ -3969,31 +3969,168 @@ async function generateLivePhotoFormat(images, fps, onProgress) {
     const y = (height - img.height) / 2;
     ctx.drawImage(img, x, y);
     
-    const heicBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+    const contentIdentifier = generateUUID();
     
-    onProgress(0.5);
+    const jpegBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+    const jpegWithExif = await addLivePhotoExif(jpegBlob, contentIdentifier);
     
-    const movBlob = await generateMOVFromImages(images, fps);
+    onProgress(0.3);
+    
+    const movBlob = await generateLivePhotoMOV(images, fps, contentIdentifier, (progress) => {
+        onProgress(0.3 + progress * 0.7);
+    });
     
     onProgress(1);
     
     return {
-        heic: heicBlob,
+        jpeg: jpegWithExif,
         mov: movBlob,
         isLivePhoto: true
     };
 }
 
-async function generateMOVFromImages(images, fps) {
-    const canvas = document.createElement('canvas');
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16).toUpperCase();
+    });
+}
+
+async function addLivePhotoExif(jpegBlob, contentIdentifier) {
+    const arrayBuffer = await jpegBlob.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    
+    const exifData = buildLivePhotoExif(contentIdentifier);
+    
+    const newJpeg = insertExifIntoJpeg(data, exifData);
+    
+    return new Blob([newJpeg], { type: 'image/jpeg' });
+}
+
+function buildLivePhotoExif(contentIdentifier) {
+    const exif = [];
+    
+    exif.push(0xFF, 0xE1);
+    
+    const exifHeader = [];
+    
+    exifHeader.push(0x45, 0x78, 0x69, 0x66, 0x00, 0x00);
+    
+    exifHeader.push(0x4D, 0x4D);
+    
+    const tiffData = [];
+    
+    tiffData.push(0x00, 0x2A);
+    
+    tiffData.push(0x00, 0x00, 0x00, 0x08);
+    
+    const ifdEntries = [];
+    
+    ifdEntries.push(...buildExifEntry(0x0100, 4, 1, 0, 0));
+    
+    const contentIdBytes = stringToExifBytes(contentIdentifier);
+    ifdEntries.push(...buildExifEntry(0x8825, 2, contentIdentifier.length, 0, 0));
+    
+    const ifdData = new Uint8Array(ifdEntries);
+    const entryCount = 1;
+    
+    const tiffHeader = new Uint8Array([
+        0x00, 0x2A,
+        0x00, 0x00, 0x00, 0x08,
+        0x00, entryCount,
+        ...ifdEntries,
+        0x00, 0x00, 0x00, 0x00
+    ]);
+    
+    const totalLength = 6 + tiffHeader.length + contentIdBytes.length;
+    const lengthBytes = [(totalLength >> 8) & 0xFF, totalLength & 0xFF];
+    
+    const result = new Uint8Array(2 + totalLength);
+    result[0] = 0xFF;
+    result[1] = 0xE1;
+    result[2] = lengthBytes[0];
+    result[3] = lengthBytes[1];
+    result.set(new TextEncoder().encode('Exif\x00\x00'), 4);
+    result.set(tiffHeader, 10);
+    
+    return result;
+}
+
+function buildExifEntry(tag, type, count, value, offset) {
+    const entry = new Uint8Array(12);
+    entry[0] = (tag >> 8) & 0xFF;
+    entry[1] = tag & 0xFF;
+    entry[2] = (type >> 8) & 0xFF;
+    entry[3] = type & 0xFF;
+    entry[4] = (count >> 24) & 0xFF;
+    entry[5] = (count >> 16) & 0xFF;
+    entry[6] = (count >> 8) & 0xFF;
+    entry[7] = count & 0xFF;
+    entry[8] = (value >> 24) & 0xFF;
+    entry[9] = (value >> 16) & 0xFF;
+    entry[10] = (value >> 8) & 0xFF;
+    entry[11] = value & 0xFF;
+    return Array.from(entry);
+}
+
+function stringToExifBytes(str) {
+    const encoder = new TextEncoder();
+    return encoder.encode(str + '\x00');
+}
+
+function insertExifIntoJpeg(jpegData, exifData) {
+    if (jpegData[0] !== 0xFF || jpegData[1] !== 0xD8) {
+        throw new Error('Invalid JPEG');
+    }
+    
+    let insertPos = 2;
+    
+    while (insertPos < jpegData.length - 1) {
+        if (jpegData[insertPos] === 0xFF) {
+            const marker = jpegData[insertPos + 1];
+            if (marker === 0xE1) {
+                const segmentLength = (jpegData[insertPos + 2] << 8) | jpegData[insertPos + 3];
+                insertPos += 2 + segmentLength;
+                continue;
+            }
+            if (marker === 0xDA || marker === 0xD9) {
+                break;
+            }
+        }
+        insertPos++;
+    }
+    
+    const newData = new Uint8Array(jpegData.length + exifData.length);
+    newData.set(jpegData.slice(0, insertPos), 0);
+    newData.set(exifData, insertPos);
+    newData.set(jpegData.slice(insertPos), insertPos + exifData.length);
+    
+    return newData;
+}
+
+async function generateLivePhotoMOV(images, fps, contentIdentifier, onProgress) {
     const width = Math.max(...images.map(img => img.width));
     const height = Math.max(...images.map(img => img.height));
+    
+    const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
     
     const stream = canvas.captureStream(fps);
-    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    
+    let mimeType = 'video/webm';
+    if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mimeType = 'video/mp4';
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
+        mimeType = 'video/webm;codecs=h264';
+    }
+    
+    const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 5000000
+    });
     
     const chunks = [];
     mediaRecorder.ondataavailable = (e) => {
@@ -4003,15 +4140,19 @@ async function generateMOVFromImages(images, fps) {
     };
     
     return new Promise((resolve) => {
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
-            resolve(blob);
+        mediaRecorder.onstop = async () => {
+            const videoBlob = new Blob(chunks, { type: mimeType });
+            
+            const movBlob = await addLivePhotoMetadata(videoBlob, contentIdentifier);
+            
+            resolve(movBlob);
         };
         
         mediaRecorder.start();
         
         let frameIndex = 0;
         const frameDelay = 1000 / fps;
+        const totalFrames = images.length;
         
         const drawFrame = () => {
             if (frameIndex < images.length) {
@@ -4023,6 +4164,8 @@ async function generateMOVFromImages(images, fps) {
                 const y = (height - img.height) / 2;
                 ctx.drawImage(img, x, y);
                 
+                onProgress(frameIndex / totalFrames);
+                
                 frameIndex++;
                 setTimeout(drawFrame, frameDelay);
             } else {
@@ -4032,6 +4175,136 @@ async function generateMOVFromImages(images, fps) {
         
         drawFrame();
     });
+}
+
+async function addLivePhotoMetadata(videoBlob, contentIdentifier) {
+    const arrayBuffer = await videoBlob.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    
+    const quickTimeMetadata = buildQuickTimeMetadata(contentIdentifier);
+    
+    if (videoBlob.type.includes('mp4') || videoBlob.type.includes('quicktime')) {
+        const newData = insertQuickTimeMetadata(data, quickTimeMetadata);
+        return new Blob([newData], { type: 'video/quicktime' });
+    }
+    
+    return new Blob([data], { type: 'video/quicktime' });
+}
+
+function buildQuickTimeMetadata(contentIdentifier) {
+    const metadata = {
+        'ContentIdentifier': contentIdentifier,
+        'StillImageTime': 0
+    };
+    return metadata;
+}
+
+function insertQuickTimeMetadata(movData, metadata) {
+    const uuidAtom = buildUUIDAtom(metadata.ContentIdentifier);
+    
+    let moovPos = findAtom(movData, 'moov');
+    if (moovPos === -1) {
+        return movData;
+    }
+    
+    const moovSize = readUint32BE(movData, moovPos);
+    const newMoovSize = moovSize + uuidAtom.length;
+    
+    const newData = new Uint8Array(movData.length + uuidAtom.length);
+    
+    newData.set(movData.slice(0, moovPos));
+    
+    const sizeBytes = new Uint8Array(4);
+    sizeBytes[0] = (newMoovSize >> 24) & 0xFF;
+    sizeBytes[1] = (newMoovSize >> 16) & 0xFF;
+    sizeBytes[2] = (newMoovSize >> 8) & 0xFF;
+    sizeBytes[3] = newMoovSize & 0xFF;
+    newData.set(sizeBytes, moovPos);
+    
+    newData.set(movData.slice(movPos + 4, moovPos + 8), moovPos + 4);
+    
+    const headerEnd = moovPos + 8;
+    let insertOffset = moovPos + 8;
+    
+    const mvhdPos = findAtomInData(movData, 'mvhd', moovPos, moovPos + moovSize);
+    if (mvhdPos !== -1) {
+        insertOffset = mvhdPos;
+    }
+    
+    newData.set(movData.slice(moovPos + 8, insertOffset), moovPos + 8);
+    newData.set(uuidAtom, insertOffset);
+    newData.set(movData.slice(insertOffset), insertOffset + uuidAtom.length);
+    
+    return newData;
+}
+
+function buildUUIDAtom(contentIdentifier) {
+    const uuid = new Uint8Array([
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00
+    ]);
+    
+    const encoder = new TextEncoder();
+    const contentIdBytes = encoder.encode(contentIdentifier);
+    
+    const atomData = new Uint8Array(16 + contentIdBytes.length + 1);
+    atomData.set(uuid, 0);
+    atomData.set(contentIdBytes, 16);
+    atomData[16 + contentIdBytes.length] = 0x00;
+    
+    const atomType = encoder.encode('CNID');
+    
+    const atomSize = 8 + atomData.length;
+    const atom = new Uint8Array(atomSize);
+    
+    atom[0] = (atomSize >> 24) & 0xFF;
+    atom[1] = (atomSize >> 16) & 0xFF;
+    atom[2] = (atomSize >> 8) & 0xFF;
+    atom[3] = atomSize & 0xFF;
+    
+    atom.set(atomType, 4);
+    atom.set(atomData, 8);
+    
+    return atom;
+}
+
+function findAtom(data, type) {
+    const encoder = new TextEncoder();
+    const typeBytes = encoder.encode(type);
+    
+    for (let i = 0; i < data.length - 8; i++) {
+        if (data[i + 4] === typeBytes[0] &&
+            data[i + 5] === typeBytes[1] &&
+            data[i + 6] === typeBytes[2] &&
+            data[i + 7] === typeBytes[3]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function findAtomInData(data, type, start, end) {
+    const encoder = new TextEncoder();
+    const typeBytes = encoder.encode(type);
+    
+    for (let i = start; i < Math.min(end, data.length - 8); i++) {
+        if (data[i + 4] === typeBytes[0] &&
+            data[i + 5] === typeBytes[1] &&
+            data[i + 6] === typeBytes[2] &&
+            data[i + 7] === typeBytes[3]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function readUint32BE(data, offset) {
+    return (data[offset] << 24) |
+           (data[offset + 1] << 16) |
+           (data[offset + 2] << 8) |
+           data[offset + 3];
 }
 
 function initLivePhotoVideoMode() {
@@ -4283,12 +4556,12 @@ function downloadLivePhoto() {
     }
     
     if (livePhotoGeneratedBlob.isLivePhoto) {
-        const heicUrl = URL.createObjectURL(livePhotoGeneratedBlob.heic);
+        const jpegUrl = URL.createObjectURL(livePhotoGeneratedBlob.jpeg);
         const movUrl = URL.createObjectURL(livePhotoGeneratedBlob.mov);
         
         const a1 = document.createElement('a');
-        a1.href = heicUrl;
-        a1.download = 'live_photo.jpg';
+        a1.href = jpegUrl;
+        a1.download = 'IMG_0001.JPG';
         document.body.appendChild(a1);
         a1.click();
         document.body.removeChild(a1);
@@ -4296,18 +4569,18 @@ function downloadLivePhoto() {
         setTimeout(() => {
             const a2 = document.createElement('a');
             a2.href = movUrl;
-            a2.download = 'live_photo.mov';
+            a2.download = 'IMG_0001.MOV';
             document.body.appendChild(a2);
             a2.click();
             document.body.removeChild(a2);
             
             setTimeout(() => {
-                URL.revokeObjectURL(heicUrl);
+                URL.revokeObjectURL(jpegUrl);
                 URL.revokeObjectURL(movUrl);
             }, 100);
         }, 200);
         
-        showLivePhotoStatus('已下载 Live Photo (JPG + MOV)', 'success');
+        showLivePhotoStatus('已下载苹果 Live Photo 格式 (JPG + MOV)\n请将两个文件放在同一目录下，在iPhone相册中即可识别', 'success');
     } else {
         const format = livePhotoGeneratedBlob.type.split('/')[1];
         const url = URL.createObjectURL(livePhotoGeneratedBlob);
