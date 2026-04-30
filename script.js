@@ -1565,11 +1565,15 @@ function init() {
         imageConverterIcon: !!imageConverterIcon,
         videoConverterIcon: !!videoConverterIcon,
         audioConverterIcon: !!audioConverterIcon,
-        imageEditorIcon: !!imageEditorIcon
+        imageEditorIcon: !!imageEditorIcon,
+        livePhotoIcon: !!livePhotoIcon
     });
     drawDesktopBackground();
     initWindowControls();
     initEventListeners();
+    // 初始化Live图制作工具
+    console.log('Initializing Live Photo Tool...');
+    initLivePhotoTool();
     console.log('Application initialization complete!');
 }
 
@@ -3556,6 +3560,7 @@ updateClock();
 
 // Live图制作工具功能
 function initLivePhotoTool() {
+    console.log('initLivePhotoTool called');
     const framesUploadArea = document.getElementById('livePhotoFramesUploadArea');
     const framesInput = document.getElementById('livePhotoFramesInput');
     const videoUploadArea = document.getElementById('livePhotoVideoUploadArea');
@@ -3567,16 +3572,44 @@ function initLivePhotoTool() {
 }
 
 function initLivePhotoTabs() {
+    console.log('initLivePhotoTabs called');
     const tabs = document.querySelectorAll('.live-photo-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const mode = tab.dataset.mode;
+    console.log('Found tabs:', tabs.length);
+    tabs.forEach((tab, index) => {
+        console.log('Tab', index, ':', tab);
+        
+        // 使用事件委托方式
+        tab.addEventListener('click', (e) => {
+            console.log('Tab clicked:', e.currentTarget.dataset.mode);
+            e.stopPropagation();
+            const mode = e.currentTarget.dataset.mode;
             document.querySelectorAll('.live-photo-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.live-photo-mode').forEach(m => m.classList.remove('active'));
-            tab.classList.add('active');
+            e.currentTarget.classList.add('active');
             document.getElementById(mode + 'Mode').classList.add('active');
         });
+        
+        // 强制设置tab可点击
+        tab.style.pointerEvents = 'auto';
+        tab.style.userSelect = 'none';
     });
+    
+    // 添加事件委托到父容器
+    const tabsContainer = document.querySelector('.live-photo-tabs');
+    if (tabsContainer) {
+        tabsContainer.style.pointerEvents = 'auto';
+        tabsContainer.addEventListener('click', (e) => {
+            const tab = e.target.closest('.live-photo-tab');
+            if (tab) {
+                console.log('Tab clicked via delegate:', tab.dataset.mode);
+                const mode = tab.dataset.mode;
+                document.querySelectorAll('.live-photo-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.live-photo-mode').forEach(m => m.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(mode + 'Mode').classList.add('active');
+            }
+        });
+    }
 }
 
 function initLivePhotoFramesMode() {
@@ -4516,10 +4549,3 @@ class LZWEncoder {
         this.output.push(code);
     }
 }
-
-// 初始化Live图制作工具
-const originalInitLivePhoto = init;
-init = function() {
-    originalInitLivePhoto.call(this);
-    initLivePhotoTool();
-};

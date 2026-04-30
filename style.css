@@ -726,6 +726,14 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    /* 确保可以点击 */
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.live-photo-tab span {
+    pointer-events: none;
 }
 
 .live-photo-tab:hover {
