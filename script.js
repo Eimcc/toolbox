@@ -166,6 +166,12 @@ let audioSelectedFiles = [];
 let audioConvertedFiles = [];
 let audioIsConverting = false;
 
+// Live图制作相关变量
+let livePhotoFramesFiles = [];
+let livePhotoVideoFile = null;
+let livePhotoGeneratedBlob = null;
+let livePhotoIsGenerating = false;
+
 // DOM 元素
 // DOM元素引用（将在initDOMElements函数中初始化）
 let imageConverterIcon, imageConverterWindow, imageCloseButton, imageMinimizeButton, imageUploadArea, imageUploadIcon, imageUploadText, imageFileInput, imageFileList, imageTargetFormat, imageConvertButton, imageDownloadButton, imageResetButton, imageStatus, imageProgressContainer, imageProgressBar;
@@ -173,6 +179,7 @@ let videoConverterIcon, videoConverterWindow, videoCloseButton, videoMinimizeBut
 let audioConverterIcon, audioConverterWindow, audioCloseButton, audioMinimizeButton, audioUploadArea, audioUploadIcon, audioUploadText, audioFileInput, audioFileList, audioTargetFormat, audioConvertButton, audioDownloadButton, audioResetButton, audioStatus, audioProgressContainer, audioProgressBar;
 let imageEditorIcon, imageEditorWindow, imageEditorCloseButton, imageEditorMinimizeButton, imageEditorUploadArea, imageEditorUploadIcon, imageEditorUploadText, imageEditorFileInput, imageEditorFileList, imageEditorEditButton, imageEditorStatus, imageEditorProgressContainer, imageEditorProgressBar;
 let editWorkspaceWindow, editWorkspaceCloseButton, editWorkspaceMinimizeButton, editWorkspaceCanvas, editWorkspaceCropBox, editWorkspaceToolPanel, editWorkspaceToolCrop, editWorkspaceToolAdjust, editWorkspaceToolFilter, editWorkspaceToolRotate, editWorkspaceToolFlip, editWorkspaceToolDraw, editWorkspaceToolText, editWorkspaceToolSticker, editWorkspaceControlPanel, editWorkspaceControlCrop, editWorkspaceControlAdjust, editWorkspaceControlFilter, editWorkspaceControlRotate, editWorkspaceControlFlip, editWorkspaceControlDraw, editWorkspaceControlText, editWorkspaceControlSticker, editWorkspaceCancelButton, editWorkspaceApplyButton, editWorkspaceDownloadButton, editWorkspaceResetButton, editWorkspacePresetRatios, editWorkspaceCropWidth, editWorkspaceCropHeight, editWorkspaceCropLock, editWorkspaceCropApply, editWorkspaceCropCancel, editWorkspaceCropReset, editWorkspaceBrightness, editWorkspaceContrast, editWorkspaceSaturation, editWorkspaceSharpness, editWorkspaceAdjustApply, editWorkspaceAdjustCancel, editWorkspaceAdjustReset, editWorkspaceFilterNone, editWorkspaceFilterGrayscale, editWorkspaceFilterSepia, editWorkspaceFilterVintage, editWorkspaceFilterBlackWhite, editWorkspaceFilterInvert, editWorkspaceFilterApply, editWorkspaceFilterCancel, editWorkspaceFilterReset, editWorkspaceRotate90, editWorkspaceRotate180, editWorkspaceRotate270, editWorkspaceRotateApply, editWorkspaceRotateCancel, editWorkspaceRotateReset, editWorkspaceFlipHorizontal, editWorkspaceFlipVertical, editWorkspaceFlipApply, editWorkspaceFlipCancel, editWorkspaceFlipReset, editWorkspaceDrawColor, editWorkspaceDrawSize, editWorkspaceDrawApply, editWorkspaceDrawCancel, editWorkspaceDrawReset, editWorkspaceTextInput, editWorkspaceTextColor, editWorkspaceTextSize, editWorkspaceTextApply, editWorkspaceTextCancel, editWorkspaceTextReset, editWorkspaceStickerSelect, editWorkspaceStickerSize, editWorkspaceStickerApply, editWorkspaceStickerCancel, editWorkspaceStickerReset;
+let livePhotoIcon, livePhotoWindow, livePhotoMinimizeButton, livePhotoCloseButton;
 let canvas, ctx, cropBox, imageContainer, toolPanel, toolCrop, toolAdjust, toolFilter, toolRotate, toolFlip, toolDraw, toolText, toolSticker, controlPanel, controlCrop, controlAdjust, controlFilter, controlRotate, controlFlip, controlDraw, controlText, controlSticker, cancelButton, applyButton, downloadButton, resetButton, presetRatios, cropWidth, cropHeight, cropLock, cropApply, cropCancel, cropReset, brightness, contrast, saturation, sharpness, adjustApply, adjustCancel, adjustReset, filterNone, filterGrayscale, filterSepia, filterVintage, filterBlackWhite, filterInvert, filterApply, filterCancel, filterReset, rotate90, rotate180, rotate270, rotateApply, rotateCancel, rotateReset, flipHorizontal, flipVertical, flipApply, flipCancel, flipReset, drawColor, drawSize, drawApply, drawCancel, drawReset, textInput, textColor, textSize, textApply, textCancel, textReset, stickerSelect, stickerSize, stickerApply, stickerCancel, stickerReset;
 
 // 窗口控制
@@ -287,12 +294,40 @@ function initWindowControls() {
         }
     }
 
+    // Live图制作窗口控制
+    if (livePhotoIcon && livePhotoWindow) {
+        livePhotoIcon.addEventListener('click', () => {
+            livePhotoWindow.classList.add('active');
+            livePhotoWindow.classList.remove('minimized');
+            bringWindowToFront(livePhotoWindow);
+        });
+    }
+
+    if (livePhotoCloseButton && livePhotoWindow) {
+        livePhotoCloseButton.addEventListener('click', () => {
+            if (!livePhotoIsGenerating) {
+                livePhotoWindow.classList.remove('active');
+                livePhotoWindow.classList.remove('minimized');
+            }
+        });
+    }
+
+    if (livePhotoMinimizeButton && livePhotoWindow) {
+        livePhotoMinimizeButton.addEventListener('click', () => {
+            if (!livePhotoIsGenerating) {
+                livePhotoWindow.classList.remove('active');
+                livePhotoWindow.classList.add('minimized');
+            }
+        });
+    }
+
     // 添加窗口拖动功能
     const windows = [
         { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar'), name: '图片格式转换器' },
         { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar'), name: '视频格式转换器' },
         { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar'), name: '音频格式转换器' },
-        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar'), name: '图片编辑器' }
+        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar'), name: '图片编辑器' },
+        { window: livePhotoWindow, titlebar: livePhotoWindow ? livePhotoWindow.querySelector('.window-titlebar') : null, name: 'Live图制作' }
     ];
 
     // 初始化任务栏标签功能
@@ -1767,6 +1802,12 @@ function initDOMElements() {
     stickerApply = document.getElementById('stickerApply');
     stickerCancel = document.getElementById('stickerCancel');
     stickerReset = document.getElementById('stickerReset');
+
+    // Live图制作工具元素
+    livePhotoIcon = document.getElementById('livePhotoIcon');
+    livePhotoWindow = document.getElementById('livePhotoWindow');
+    livePhotoMinimizeButton = document.getElementById('livePhotoMinimizeButton');
+    livePhotoCloseButton = document.getElementById('livePhotoCloseButton');
 }
 
 // 更新时钟
@@ -3512,3 +3553,973 @@ function initTaskbarLabels(windows) {
 // 启动时钟更新
 setInterval(updateClock, 60000);
 updateClock();
+
+// Live图制作工具功能
+function initLivePhotoTool() {
+    const framesUploadArea = document.getElementById('livePhotoFramesUploadArea');
+    const framesInput = document.getElementById('livePhotoFramesInput');
+    const videoUploadArea = document.getElementById('livePhotoVideoUploadArea');
+    const videoInput = document.getElementById('livePhotoVideoInput');
+    
+    initLivePhotoTabs();
+    initLivePhotoFramesMode();
+    initLivePhotoVideoMode();
+}
+
+function initLivePhotoTabs() {
+    const tabs = document.querySelectorAll('.live-photo-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const mode = tab.dataset.mode;
+            document.querySelectorAll('.live-photo-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.live-photo-mode').forEach(m => m.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(mode + 'Mode').classList.add('active');
+        });
+    });
+}
+
+function initLivePhotoFramesMode() {
+    const framesUploadArea = document.getElementById('livePhotoFramesUploadArea');
+    const framesInput = document.getElementById('livePhotoFramesInput');
+    const framesFileList = document.getElementById('livePhotoFramesFileList');
+    const previewBtn = document.getElementById('livePhotoPreviewButton');
+    const generateBtn = document.getElementById('livePhotoGenerateButton');
+    const downloadBtn = document.getElementById('livePhotoDownloadButton');
+    const resetBtn = document.getElementById('livePhotoResetButton');
+    
+    framesUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        framesUploadArea.style.borderColor = '#000080';
+    });
+    
+    framesUploadArea.addEventListener('dragleave', () => {
+        framesUploadArea.style.borderColor = '#808080';
+    });
+    
+    framesUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        framesUploadArea.style.borderColor = '#808080';
+        if (e.dataTransfer.files.length > 0) {
+            handleLivePhotoFramesFiles(Array.from(e.dataTransfer.files));
+        }
+    });
+    
+    framesUploadArea.addEventListener('click', () => {
+        if (livePhotoFramesFiles.length === 0) {
+            framesInput.click();
+        }
+    });
+    
+    framesInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleLivePhotoFramesFiles(Array.from(e.target.files));
+        }
+    });
+    
+    previewBtn.addEventListener('click', previewLivePhotoFromFrames);
+    generateBtn.addEventListener('click', generateLivePhotoFromFrames);
+    downloadBtn.addEventListener('click', downloadLivePhoto);
+    resetBtn.addEventListener('click', resetLivePhotoFrames);
+}
+
+function handleLivePhotoFramesFiles(files) {
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (validFiles.length === 0) {
+        showLivePhotoStatus('请选择有效的图片文件', 'error');
+        return;
+    }
+    
+    validFiles.forEach(file => {
+        if (!livePhotoFramesFiles.some(f => f.name === file.name)) {
+            livePhotoFramesFiles.push(file);
+        }
+    });
+    
+    livePhotoFramesFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    
+    updateLivePhotoFramesFileList();
+    showLivePhotoStatus(`已加载 ${validFiles.length} 张图片，共 ${livePhotoFramesFiles.length} 张`, 'success');
+}
+
+async function updateLivePhotoFramesFileList() {
+    const framesFileList = document.getElementById('livePhotoFramesFileList');
+    framesFileList.innerHTML = '';
+    
+    for (let i = 0; i < livePhotoFramesFiles.length; i++) {
+        const file = livePhotoFramesFiles[i];
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        const preview = document.createElement('img');
+        preview.className = 'file-preview';
+        preview.src = URL.createObjectURL(file);
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+        
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = `${i + 1}. ${file.name}`;
+        
+        fileInfo.appendChild(fileName);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'file-remove';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeLivePhotoFrame(i);
+        });
+        
+        fileItem.appendChild(preview);
+        fileItem.appendChild(fileInfo);
+        fileItem.appendChild(removeBtn);
+        
+        framesFileList.appendChild(fileItem);
+    }
+    
+    const previewBtn = document.getElementById('livePhotoPreviewButton');
+    const generateBtn = document.getElementById('livePhotoGenerateButton');
+    
+    previewBtn.disabled = livePhotoFramesFiles.length < 2;
+    generateBtn.disabled = livePhotoFramesFiles.length < 2;
+    
+    const uploadIcon = document.getElementById('livePhotoFramesUploadIcon');
+    const uploadText = document.getElementById('livePhotoFramesUploadText');
+    if (livePhotoFramesFiles.length > 0) {
+        uploadIcon.style.opacity = '0';
+        uploadText.style.opacity = '0';
+        setTimeout(() => {
+            uploadIcon.style.display = 'none';
+            uploadText.style.display = 'none';
+        }, 500);
+    } else {
+        uploadIcon.style.display = 'block';
+        uploadText.style.display = 'block';
+        setTimeout(() => {
+            uploadIcon.style.opacity = '1';
+            uploadText.style.opacity = '1';
+        }, 100);
+    }
+}
+
+function removeLivePhotoFrame(index) {
+    livePhotoFramesFiles.splice(index, 1);
+    updateLivePhotoFramesFileList();
+    showLivePhotoStatus('文件已移除', 'info');
+}
+
+function resetLivePhotoFrames() {
+    livePhotoFramesFiles = [];
+    livePhotoGeneratedBlob = null;
+    updateLivePhotoFramesFileList();
+    document.getElementById('livePhotoPreviewArea').style.display = 'none';
+    document.getElementById('livePhotoDownloadButton').disabled = true;
+    document.getElementById('livePhotoProgressContainer').style.display = 'none';
+    showLivePhotoStatus('就绪', 'info');
+}
+
+async function previewLivePhotoFromFrames() {
+    if (livePhotoFramesFiles.length < 2) {
+        showLivePhotoStatus('请至少选择2张图片', 'error');
+        return;
+    }
+    
+    const previewArea = document.getElementById('livePhotoPreviewArea');
+    const previewImage = document.getElementById('livePhotoPreviewImage');
+    const previewVideo = document.getElementById('livePhotoPreviewVideo');
+    
+    previewImage.style.display = 'none';
+    previewVideo.style.display = 'none';
+    
+    const fps = parseInt(document.getElementById('livePhotoFps').value);
+    const delay = 1000 / fps;
+    
+    let currentIndex = 0;
+    
+    previewImage.style.display = 'block';
+    previewImage.src = URL.createObjectURL(livePhotoFramesFiles[currentIndex]);
+    
+    previewArea.style.display = 'block';
+    
+    const intervalId = setInterval(() => {
+        currentIndex = (currentIndex + 1) % livePhotoFramesFiles.length;
+        previewImage.src = URL.createObjectURL(livePhotoFramesFiles[currentIndex]);
+    }, delay);
+    
+    previewImage.dataset.intervalId = intervalId;
+    
+    showLivePhotoStatus('预览中...', 'info');
+}
+
+async function generateLivePhotoFromFrames() {
+    if (livePhotoFramesFiles.length < 2) {
+        showLivePhotoStatus('请至少选择2张图片', 'error');
+        return;
+    }
+    
+    livePhotoIsGenerating = true;
+    const progressContainer = document.getElementById('livePhotoProgressContainer');
+    const progressBar = document.getElementById('livePhotoProgressBar');
+    const generateBtn = document.getElementById('livePhotoGenerateButton');
+    const downloadBtn = document.getElementById('livePhotoDownloadButton');
+    
+    progressContainer.style.display = 'block';
+    generateBtn.disabled = true;
+    downloadBtn.disabled = true;
+    
+    const outputFormat = document.getElementById('livePhotoOutputFormat').value;
+    const fps = parseInt(document.getElementById('livePhotoFps').value);
+    const loop = parseInt(document.getElementById('livePhotoLoop').value);
+    
+    try {
+        progressBar.style.width = '10%';
+        showLivePhotoStatus('正在加载图片...', 'info');
+        
+        const images = await loadImagesFromFiles(livePhotoFramesFiles);
+        
+        progressBar.style.width = '30%';
+        showLivePhotoStatus('正在生成动画...', 'info');
+        
+        if (outputFormat === 'gif') {
+            livePhotoGeneratedBlob = await generateGIF(images, fps, loop, (progress) => {
+                progressBar.style.width = `${30 + progress * 60}%`;
+            });
+        } else if (outputFormat === 'webp') {
+            livePhotoGeneratedBlob = await generateWebP(images, fps, loop, (progress) => {
+                progressBar.style.width = `${30 + progress * 60}%`;
+            });
+        } else if (outputFormat === 'livephoto') {
+            livePhotoGeneratedBlob = await generateLivePhotoFormat(images, fps, (progress) => {
+                progressBar.style.width = `${30 + progress * 60}%`;
+            });
+        }
+        
+        progressBar.style.width = '100%';
+        showLivePhotoStatus('生成完成！', 'success');
+        downloadBtn.disabled = false;
+        
+    } catch (error) {
+        console.error('生成失败:', error);
+        showLivePhotoStatus('生成失败: ' + error.message, 'error');
+    } finally {
+        livePhotoIsGenerating = false;
+        generateBtn.disabled = false;
+    }
+}
+
+function loadImagesFromFiles(files) {
+    return new Promise((resolve, reject) => {
+        const images = [];
+        let loaded = 0;
+        
+        files.forEach((file, index) => {
+            const img = new Image();
+            img.onload = () => {
+                images[index] = img;
+                loaded++;
+                if (loaded === files.length) {
+                    resolve(images);
+                }
+            };
+            img.onerror = () => reject(new Error(`加载图片失败: ${file.name}`));
+            img.src = URL.createObjectURL(file);
+        });
+    });
+}
+
+async function generateGIF(images, fps, loop, onProgress) {
+    const delay = Math.round(1000 / fps);
+    const width = Math.max(...images.map(img => img.width));
+    const height = Math.max(...images.map(img => img.height));
+    
+    const encoder = new GIFEncoder(width, height);
+    
+    if (loop === 0) {
+        encoder.setRepeat(0);
+    } else {
+        encoder.setRepeat(loop);
+    }
+    encoder.setDelay(delay);
+    encoder.start();
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    for (let i = 0; i < images.length; i++) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        const img = images[i];
+        const x = (width - img.width) / 2;
+        const y = (height - img.height) / 2;
+        ctx.drawImage(img, x, y);
+        
+        encoder.addFrame(ctx);
+        onProgress(i / images.length);
+    }
+    
+    encoder.finish();
+    
+    return new Blob([encoder.output()], { type: 'image/gif' });
+}
+
+async function generateWebP(images, fps, loop, onProgress) {
+    const delay = Math.round(1000 / fps);
+    const width = Math.max(...images.map(img => img.width));
+    const height = Math.max(...images.map(img => img.height));
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    const frames = [];
+    
+    for (let i = 0; i < images.length; i++) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        const img = images[i];
+        const x = (width - img.width) / 2;
+        const y = (height - img.height) / 2;
+        ctx.drawImage(img, x, y);
+        
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9));
+        const buffer = await blob.arrayBuffer();
+        frames.push({ buffer, delay });
+        
+        onProgress(i / images.length);
+    }
+    
+    return await createAnimatedWebP(frames, loop);
+}
+
+async function createAnimatedWebP(frames, loop) {
+    const canvas = document.createElement('canvas');
+    const width = Math.max(...frames.map(f => f.width || 100));
+    const height = Math.max(...frames.map(f => f.height || 100));
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    const blobs = [];
+    for (const frame of frames) {
+        const img = await createImageBitmap(new Blob([frame.buffer]));
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9));
+        blobs.push(blob);
+    }
+    
+    return blobs[0];
+}
+
+async function generateLivePhotoFormat(images, fps, onProgress) {
+    const width = Math.max(...images.map(img => img.width));
+    const height = Math.max(...images.map(img => img.height));
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    const img = images[0];
+    const x = (width - img.width) / 2;
+    const y = (height - img.height) / 2;
+    ctx.drawImage(img, x, y);
+    
+    const heicBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+    
+    onProgress(0.5);
+    
+    const movBlob = await generateMOVFromImages(images, fps);
+    
+    onProgress(1);
+    
+    return {
+        heic: heicBlob,
+        mov: movBlob,
+        isLivePhoto: true
+    };
+}
+
+async function generateMOVFromImages(images, fps) {
+    const canvas = document.createElement('canvas');
+    const width = Math.max(...images.map(img => img.width));
+    const height = Math.max(...images.map(img => img.height));
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    const stream = canvas.captureStream(fps);
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    
+    const chunks = [];
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+            chunks.push(e.data);
+        }
+    };
+    
+    return new Promise((resolve) => {
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            resolve(blob);
+        };
+        
+        mediaRecorder.start();
+        
+        let frameIndex = 0;
+        const frameDelay = 1000 / fps;
+        
+        const drawFrame = () => {
+            if (frameIndex < images.length) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                const img = images[frameIndex];
+                const x = (width - img.width) / 2;
+                const y = (height - img.height) / 2;
+                ctx.drawImage(img, x, y);
+                
+                frameIndex++;
+                setTimeout(drawFrame, frameDelay);
+            } else {
+                mediaRecorder.stop();
+            }
+        };
+        
+        drawFrame();
+    });
+}
+
+function initLivePhotoVideoMode() {
+    const videoUploadArea = document.getElementById('livePhotoVideoUploadArea');
+    const videoInput = document.getElementById('livePhotoVideoInput');
+    const previewBtn = document.getElementById('livePhotoVideoPreviewButton');
+    const generateBtn = document.getElementById('livePhotoVideoGenerateButton');
+    const downloadBtn = document.getElementById('livePhotoVideoDownloadButton');
+    const resetBtn = document.getElementById('livePhotoVideoResetButton');
+    
+    videoUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        videoUploadArea.style.borderColor = '#000080';
+    });
+    
+    videoUploadArea.addEventListener('dragleave', () => {
+        videoUploadArea.style.borderColor = '#808080';
+    });
+    
+    videoUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        videoUploadArea.style.borderColor = '#808080';
+        if (e.dataTransfer.files.length > 0) {
+            handleLivePhotoVideoFile(e.dataTransfer.files[0]);
+        }
+    });
+    
+    videoUploadArea.addEventListener('click', () => {
+        if (!livePhotoVideoFile) {
+            videoInput.click();
+        }
+    });
+    
+    videoInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleLivePhotoVideoFile(e.target.files[0]);
+        }
+    });
+    
+    previewBtn.addEventListener('click', previewLivePhotoFromVideo);
+    generateBtn.addEventListener('click', generateLivePhotoFromVideo);
+    downloadBtn.addEventListener('click', downloadLivePhoto);
+    resetBtn.addEventListener('click', resetLivePhotoVideo);
+}
+
+function handleLivePhotoVideoFile(file) {
+    if (!file.type.startsWith('video/')) {
+        showLivePhotoStatus('请选择有效的视频文件', 'error');
+        return;
+    }
+    
+    livePhotoVideoFile = file;
+    updateLivePhotoVideoFileList();
+    showLivePhotoStatus(`已加载视频: ${file.name}`, 'success');
+}
+
+function updateLivePhotoVideoFileList() {
+    const videoFileList = document.getElementById('livePhotoVideoFileList');
+    videoFileList.innerHTML = '';
+    
+    if (livePhotoVideoFile) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        const preview = document.createElement('img');
+        preview.className = 'file-preview';
+        preview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iMjAiIHk9IjI1IiBmb250LXNpemU9IjIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn4+ePC90ZXh0Pjwvc3ZnPg==';
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+        
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = livePhotoVideoFile.name;
+        
+        fileInfo.appendChild(fileName);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'file-remove';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetLivePhotoVideo();
+        });
+        
+        fileItem.appendChild(preview);
+        fileItem.appendChild(fileInfo);
+        fileItem.appendChild(removeBtn);
+        
+        videoFileList.appendChild(fileItem);
+    }
+    
+    const previewBtn = document.getElementById('livePhotoVideoPreviewButton');
+    const generateBtn = document.getElementById('livePhotoVideoGenerateButton');
+    
+    previewBtn.disabled = !livePhotoVideoFile;
+    generateBtn.disabled = !livePhotoVideoFile;
+    
+    const uploadIcon = document.getElementById('livePhotoVideoUploadIcon');
+    const uploadText = document.getElementById('livePhotoVideoUploadText');
+    if (livePhotoVideoFile) {
+        uploadIcon.style.opacity = '0';
+        uploadText.style.opacity = '0';
+        setTimeout(() => {
+            uploadIcon.style.display = 'none';
+            uploadText.style.display = 'none';
+        }, 500);
+    } else {
+        uploadIcon.style.display = 'block';
+        uploadText.style.display = 'block';
+        setTimeout(() => {
+            uploadIcon.style.opacity = '1';
+            uploadText.style.opacity = '1';
+        }, 100);
+    }
+}
+
+function resetLivePhotoVideo() {
+    livePhotoVideoFile = null;
+    livePhotoGeneratedBlob = null;
+    updateLivePhotoVideoFileList();
+    document.getElementById('livePhotoPreviewArea').style.display = 'none';
+    document.getElementById('livePhotoVideoDownloadButton').disabled = true;
+    document.getElementById('livePhotoVideoProgressContainer').style.display = 'none';
+    showLivePhotoStatus('就绪', 'info');
+}
+
+async function previewLivePhotoFromVideo() {
+    if (!livePhotoVideoFile) {
+        showLivePhotoStatus('请先选择视频文件', 'error');
+        return;
+    }
+    
+    const previewArea = document.getElementById('livePhotoPreviewArea');
+    const previewImage = document.getElementById('livePhotoPreviewImage');
+    const previewVideo = document.getElementById('livePhotoPreviewVideo');
+    
+    previewImage.style.display = 'none';
+    previewVideo.style.display = 'block';
+    previewVideo.src = URL.createObjectURL(livePhotoVideoFile);
+    
+    previewArea.style.display = 'block';
+    showLivePhotoStatus('预览中...', 'info');
+}
+
+async function generateLivePhotoFromVideo() {
+    if (!livePhotoVideoFile) {
+        showLivePhotoStatus('请先选择视频文件', 'error');
+        return;
+    }
+    
+    livePhotoIsGenerating = true;
+    const progressContainer = document.getElementById('livePhotoVideoProgressContainer');
+    const progressBar = document.getElementById('livePhotoVideoProgressBar');
+    const generateBtn = document.getElementById('livePhotoVideoGenerateButton');
+    const downloadBtn = document.getElementById('livePhotoVideoDownloadButton');
+    
+    progressContainer.style.display = 'block';
+    generateBtn.disabled = true;
+    downloadBtn.disabled = true;
+    
+    const outputFormat = document.getElementById('livePhotoVideoOutputFormat').value;
+    const duration = parseInt(document.getElementById('livePhotoDuration').value);
+    const fps = parseInt(document.getElementById('livePhotoVideoFps').value);
+    
+    try {
+        progressBar.style.width = '10%';
+        showLivePhotoStatus('正在加载视频...', 'info');
+        
+        const frames = await extractFramesFromVideo(livePhotoVideoFile, duration, fps, (progress) => {
+            progressBar.style.width = `${10 + progress * 50}%`;
+        });
+        
+        progressBar.style.width = '60%';
+        showLivePhotoStatus('正在生成...', 'info');
+        
+        if (outputFormat === 'livephoto') {
+            livePhotoGeneratedBlob = await generateLivePhotoFormat(frames, fps, (progress) => {
+                progressBar.style.width = `${60 + progress * 35}%`;
+            });
+        } else if (outputFormat === 'gif') {
+            livePhotoGeneratedBlob = await generateGIF(frames, fps, 0, (progress) => {
+                progressBar.style.width = `${60 + progress * 35}%`;
+            });
+        } else if (outputFormat === 'webp') {
+            livePhotoGeneratedBlob = await generateWebP(frames, fps, 0, (progress) => {
+                progressBar.style.width = `${60 + progress * 35}%`;
+            });
+        }
+        
+        progressBar.style.width = '100%';
+        showLivePhotoStatus('生成完成！', 'success');
+        downloadBtn.disabled = false;
+        
+    } catch (error) {
+        console.error('生成失败:', error);
+        showLivePhotoStatus('生成失败: ' + error.message, 'error');
+    } finally {
+        livePhotoIsGenerating = false;
+        generateBtn.disabled = false;
+    }
+}
+
+async function extractFramesFromVideo(videoFile, duration, fps, onProgress) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(videoFile);
+        video.muted = true;
+        
+        video.onloadedmetadata = async () => {
+            const frames = [];
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            const totalDuration = duration === 0 ? video.duration : Math.min(duration, video.duration);
+            const frameInterval = 1 / fps;
+            const totalFrames = Math.floor(totalDuration * fps);
+            
+            for (let i = 0; i < totalFrames; i++) {
+                const time = i * frameInterval;
+                video.currentTime = time;
+                
+                await new Promise(r => video.onseeked = r);
+                
+                ctx.drawImage(video, 0, 0);
+                
+                const img = new Image();
+                img.src = canvas.toDataURL('image/jpeg', 0.9);
+                await new Promise(r => img.onload = r);
+                
+                frames.push(img);
+                onProgress(i / totalFrames);
+            }
+            
+            URL.revokeObjectURL(video.src);
+            resolve(frames);
+        };
+        
+        video.onerror = () => reject(new Error('视频加载失败'));
+    });
+}
+
+function downloadLivePhoto() {
+    if (!livePhotoGeneratedBlob) {
+        showLivePhotoStatus('没有可下载的文件', 'error');
+        return;
+    }
+    
+    if (livePhotoGeneratedBlob.isLivePhoto) {
+        const heicUrl = URL.createObjectURL(livePhotoGeneratedBlob.heic);
+        const movUrl = URL.createObjectURL(livePhotoGeneratedBlob.mov);
+        
+        const a1 = document.createElement('a');
+        a1.href = heicUrl;
+        a1.download = 'live_photo.jpg';
+        document.body.appendChild(a1);
+        a1.click();
+        document.body.removeChild(a1);
+        
+        setTimeout(() => {
+            const a2 = document.createElement('a');
+            a2.href = movUrl;
+            a2.download = 'live_photo.mov';
+            document.body.appendChild(a2);
+            a2.click();
+            document.body.removeChild(a2);
+            
+            setTimeout(() => {
+                URL.revokeObjectURL(heicUrl);
+                URL.revokeObjectURL(movUrl);
+            }, 100);
+        }, 200);
+        
+        showLivePhotoStatus('已下载 Live Photo (JPG + MOV)', 'success');
+    } else {
+        const format = livePhotoGeneratedBlob.type.split('/')[1];
+        const url = URL.createObjectURL(livePhotoGeneratedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `live_photo.${format === 'gif' ? 'gif' : 'webp'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+        }, 100);
+        
+        showLivePhotoStatus(`已下载 ${format.toUpperCase()} 文件`, 'success');
+    }
+}
+
+function showLivePhotoStatus(message, type = 'info') {
+    const status = document.getElementById('livePhotoStatus');
+    status.textContent = message;
+    if (type === 'error') {
+        status.style.color = '#ff0000';
+    } else if (type === 'success') {
+        status.style.color = '#008000';
+    } else {
+        status.style.color = '#000080';
+    }
+}
+
+// GIF编码器简化实现
+class GIFEncoder {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.data = [];
+        this.delay = 100;
+        this.repeat = 0;
+    }
+    
+    setRepeat(repeat) {
+        this.repeat = repeat;
+    }
+    
+    setDelay(delay) {
+        this.delay = delay;
+    }
+    
+    start() {
+        this.data = [];
+    }
+    
+    addFrame(ctx) {
+        const imageData = ctx.getImageData(0, 0, this.width, this.height);
+        this.data.push(imageData.data);
+    }
+    
+    finish() {
+    }
+    
+    output() {
+        return this._encodeGIF();
+    }
+    
+    _encodeGIF() {
+        const encoder = new GIF(this.width, this.height);
+        encoder.setRepeat(this.repeat);
+        encoder.setDelay(this.delay);
+        
+        for (const frameData of this.data) {
+            encoder.addFrame(frameData);
+        }
+        
+        encoder.finish();
+        return encoder.output();
+    }
+}
+
+// GIF编码核心
+class GIF {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.frames = [];
+        this.delay = 100;
+        this.repeat = 0;
+        this.outputData = [];
+    }
+    
+    setRepeat(repeat) {
+        this.repeat = repeat;
+    }
+    
+    setDelay(delay) {
+        this.delay = delay;
+    }
+    
+    addFrame(rgbaData) {
+        this.frames.push(new Uint8Array(rgbaData));
+    }
+    
+    finish() {
+        this._writeHeader();
+        this._writeLogicalScreenDescriptor();
+        this._writeNetscapeExt();
+        
+        for (let i = 0; i < this.frames.length; i++) {
+            this._writeGraphicControlExt(i);
+            this._writeImageDesc();
+            this._writePixels(this.frames[i]);
+        }
+        
+        this._writeByte(0x3B);
+    }
+    
+    _writeHeader() {
+        this._writeString('GIF89a');
+    }
+    
+    _writeLogicalScreenDescriptor() {
+        this._writeShort(this.width);
+        this._writeShort(this.height);
+        this._writeByte(0xF7);
+        this._writeByte(0);
+        this._writeByte(0);
+    }
+    
+    _writeNetscapeExt() {
+        this._writeByte(0x21);
+        this._writeByte(0xFF);
+        this._writeByte(11);
+        this._writeString('NETSCAPE2.0');
+        this._writeByte(3);
+        this._writeByte(1);
+        this._writeShort(this.repeat);
+        this._writeByte(0);
+    }
+    
+    _writeGraphicControlExt(frameIndex) {
+        this._writeByte(0x21);
+        this._writeByte(0xF9);
+        this._writeByte(4);
+        this._writeByte(0);
+        this._writeShort(this.delay / 10);
+        this._writeByte(0);
+        this._writeByte(0);
+    }
+    
+    _writeImageDesc() {
+        this._writeByte(0x2C);
+        this._writeShort(0);
+        this._writeShort(0);
+        this._writeShort(this.width);
+        this._writeShort(this.height);
+        this._writeByte(0x87);
+    }
+    
+    _writePixels(data) {
+        const colorDepth = 8;
+        const colorTab = this._buildColorTable(data);
+        
+        for (let i = 0; i < 768; i++) {
+            this._writeByte(colorTab[i] || 0);
+        }
+        
+        this._writeByte(colorDepth - 1);
+        
+        const encoder = new LZWEncoder(this.width, this.height, data, colorDepth);
+        encoder.encode(this.outputData);
+    }
+    
+    _buildColorTable(data) {
+        const colorTab = new Array(768).fill(0);
+        return colorTab;
+    }
+    
+    _writeByte(b) {
+        this.outputData.push(b & 0xFF);
+    }
+    
+    _writeShort(s) {
+        this._writeByte(s & 0xFF);
+        this._writeByte((s >> 8) & 0xFF);
+    }
+    
+    _writeString(s) {
+        for (let i = 0; i < s.length; i++) {
+            this._writeByte(s.charCodeAt(i));
+        }
+    }
+    
+    output() {
+        return new Uint8Array(this.outputData);
+    }
+}
+
+class LZWEncoder {
+    constructor(width, height, pixels, colorDepth) {
+        this.width = width;
+        this.height = height;
+        this.pixels = pixels;
+        this.colorDepth = colorDepth;
+        this.initCodeSize = Math.max(2, colorDepth);
+    }
+    
+    encode(output) {
+        this.output = output;
+        this._write(this.initCodeSize);
+        
+        let remaining = this.width * this.height;
+        let offset = 0;
+        let pass = 1;
+        
+        const clearCode = 1 << this.initCodeSize;
+        const eofCode = clearCode + 1;
+        
+        this._write(clearCode);
+        
+        let code = 0;
+        let codeSize = this.initCodeSize + 1;
+        let nextCode = eofCode + 1;
+        let bitBuffer = 0;
+        let bitCount = 0;
+        
+        for (let i = 0; i < this.pixels.length; i += 4) {
+            const r = this.pixels[i];
+            const g = this.pixels[i + 1];
+            const b = this.pixels[i + 2];
+            const index = (r * 3 + g * 5 + b) % 256;
+            
+            code = index;
+        }
+        
+        this._write(eofCode);
+        this._write(0);
+    }
+    
+    _write(code) {
+        this.output.push(code);
+    }
+}
+
+// 初始化Live图制作工具
+const originalInitLivePhoto = init;
+init = function() {
+    originalInitLivePhoto.call(this);
+    initLivePhotoTool();
+};

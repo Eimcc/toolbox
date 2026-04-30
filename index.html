@@ -33,6 +33,11 @@
             <div class="icon-label">图片编辑器</div>
         </div>
 
+        <div class="desktop-icon" id="livePhotoIcon" style="top: 420px; left: 20px;">
+            <div class="icon-image">📸</div>
+            <div class="icon-label">Live图制作</div>
+        </div>
+
 
         <!-- 图片转换器窗口 -->
         <div class="window" id="imageConverterWindow">
@@ -306,6 +311,145 @@
                     <button class="button" id="saveEditor">保存编辑</button>
                     <button class="button" id="cancelEditor">取消</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Live图制作窗口 -->
+        <div class="window" id="livePhotoWindow">
+            <div class="window-titlebar">
+                <div class="window-title">Live图制作</div>
+                <div class="window-controls">
+                    <div class="control-button" id="livePhotoMinimizeButton">_</div>
+                    <div class="control-button" id="livePhotoMaximizeButton">□</div>
+                    <div class="control-button" id="livePhotoCloseButton">×</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="title">将序列帧图片制成Live图/GIF，或视频转换成Live图格式</div>
+                
+                <!-- 模式选择 -->
+                <div class="live-photo-tabs">
+                    <div class="live-photo-tab active" data-mode="frames">
+                        <span class="tab-icon">🖼️</span>
+                        <span class="tab-text">序列帧转Live图</span>
+                    </div>
+                    <div class="live-photo-tab" data-mode="video">
+                        <span class="tab-icon">🎬</span>
+                        <span class="tab-text">视频转Live图</span>
+                    </div>
+                </div>
+                
+                <!-- 序列帧模式 -->
+                <div class="live-photo-mode active" id="framesMode">
+                    <div class="upload-file-area" id="livePhotoFramesUploadArea">
+                        <input type="file" id="livePhotoFramesInput" accept="image/*" style="display: none;" multiple>
+                        <div class="upload-icon" id="livePhotoFramesUploadIcon">📁</div>
+                        <div class="upload-text" id="livePhotoFramesUploadText">点击或拖拽序列帧图片到此处<br>支持批量选择多张图片<br>图片将按文件名排序</div>
+                        <div class="file-list" id="livePhotoFramesFileList"></div>
+                    </div>
+                    
+                    <div class="format-section">
+                        <div class="format-group">
+                            <label class="format-label">输出格式</label>
+                            <select id="livePhotoOutputFormat" class="format-select">
+                                <option value="gif">GIF 动图</option>
+                                <option value="webp">WebP 动图</option>
+                                <option value="livephoto">Live Photo (MOV+HEIC)</option>
+                            </select>
+                        </div>
+                        <div class="format-group">
+                            <label class="format-label">帧率 (FPS)</label>
+                            <select id="livePhotoFps" class="format-select">
+                                <option value="5">5 FPS</option>
+                                <option value="10" selected>10 FPS</option>
+                                <option value="15">15 FPS</option>
+                                <option value="20">20 FPS</option>
+                                <option value="30">30 FPS</option>
+                            </select>
+                        </div>
+                        <div class="format-group">
+                            <label class="format-label">循环播放</label>
+                            <select id="livePhotoLoop" class="format-select">
+                                <option value="0">无限循环</option>
+                                <option value="1">播放1次</option>
+                                <option value="2">播放2次</option>
+                                <option value="3">播放3次</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container" id="livePhotoProgressContainer">
+                        <div class="progress-bar" id="livePhotoProgressBar"></div>
+                    </div>
+                    
+                    <div class="button-area">
+                        <button class="button" id="livePhotoPreviewButton" disabled>预览</button>
+                        <button class="button" id="livePhotoGenerateButton" disabled>生成</button>
+                        <button class="button" id="livePhotoDownloadButton" disabled>下载</button>
+                        <button class="button" id="livePhotoResetButton">清空</button>
+                    </div>
+                </div>
+                
+                <!-- 视频模式 -->
+                <div class="live-photo-mode" id="videoMode">
+                    <div class="upload-file-area" id="livePhotoVideoUploadArea">
+                        <input type="file" id="livePhotoVideoInput" accept="video/*" style="display: none;">
+                        <div class="upload-icon" id="livePhotoVideoUploadIcon">📁</div>
+                        <div class="upload-text" id="livePhotoVideoUploadText">点击或拖拽视频文件到此处<br>支持MP4、WebM、MOV等格式</div>
+                        <div class="file-list" id="livePhotoVideoFileList"></div>
+                    </div>
+                    
+                    <div class="format-section">
+                        <div class="format-group">
+                            <label class="format-label">输出格式</label>
+                            <select id="livePhotoVideoOutputFormat" class="format-select">
+                                <option value="livephoto">Live Photo (MOV+HEIC)</option>
+                                <option value="gif">GIF 动图</option>
+                                <option value="webp">WebP 动图</option>
+                            </select>
+                        </div>
+                        <div class="format-group">
+                            <label class="format-label">截取时长 (秒)</label>
+                            <select id="livePhotoDuration" class="format-select">
+                                <option value="1">1秒</option>
+                                <option value="2">2秒</option>
+                                <option value="3" selected>3秒</option>
+                                <option value="5">5秒</option>
+                                <option value="10">10秒</option>
+                                <option value="0">完整视频</option>
+                            </select>
+                        </div>
+                        <div class="format-group">
+                            <label class="format-label">帧率 (FPS)</label>
+                            <select id="livePhotoVideoFps" class="format-select">
+                                <option value="5">5 FPS</option>
+                                <option value="10" selected>10 FPS</option>
+                                <option value="15">15 FPS</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container" id="livePhotoVideoProgressContainer">
+                        <div class="progress-bar" id="livePhotoVideoProgressBar"></div>
+                    </div>
+                    
+                    <div class="button-area">
+                        <button class="button" id="livePhotoVideoPreviewButton" disabled>预览</button>
+                        <button class="button" id="livePhotoVideoGenerateButton" disabled>生成</button>
+                        <button class="button" id="livePhotoVideoDownloadButton" disabled>下载</button>
+                        <button class="button" id="livePhotoVideoResetButton">清空</button>
+                    </div>
+                </div>
+                
+                <!-- 预览区域 -->
+                <div class="live-photo-preview-area" id="livePhotoPreviewArea" style="display: none;">
+                    <div class="preview-container">
+                        <img id="livePhotoPreviewImage" style="display: none; max-width: 100%; max-height: 200px;">
+                        <video id="livePhotoPreviewVideo" style="display: none; max-width: 100%; max-height: 200px;" controls></video>
+                    </div>
+                </div>
+                
+                <div class="status" id="livePhotoStatus">就绪</div>
             </div>
         </div>
     </div>
