@@ -694,3 +694,185 @@ body {
     border-color: #aca899 #fff #fff #aca899;
     margin-top: 8px;
 }
+
+/* 配色工具样式 */
+#colorToolWindow {
+    width: 900px;
+    height: 650px;
+}
+
+.color-tool-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.color-tool-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 280px;
+}
+
+.color-wheel-container {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 0 auto;
+    cursor: crosshair;
+}
+
+#colorWheelCanvas {
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    background: white;
+}
+
+.color-wheel-marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.color-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.color-preview {
+    width: 100%;
+    height: 60px;
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    background-color: #FF5733;
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-input-group label {
+    font-weight: bold;
+    font-size: 11px;
+    min-width: 20px;
+}
+
+.color-input-group input {
+    flex: 1;
+    padding: 3px 4px;
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    background-color: #ffffff;
+    font-family: "Microsoft Sans Serif", Arial, sans-serif;
+    font-size: 11px;
+    min-width: 0;
+}
+
+.color-input-group input[type="number"] {
+    width: 60px;
+}
+
+.color-tool-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+.color-scheme-selector,
+.color-count-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.color-scheme-selector label,
+.color-count-selector label {
+    font-weight: bold;
+    font-size: 11px;
+    min-width: 80px;
+}
+
+.color-count-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-count-controls button {
+    width: 30px;
+    min-width: 30px;
+    padding: 4px;
+}
+
+#colorCountDisplay {
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.color-scheme-display {
+    flex: 1;
+    min-height: 200px;
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    background-color: #ffffff;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.color-scheme-colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.color-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.color-swatch:hover {
+    transform: scale(1.05);
+}
+
+.color-swatch-box {
+    width: 80px;
+    height: 80px;
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+
+.color-swatch-info {
+    font-size: 10px;
+    text-align: center;
+    color: #000;
+    background-color: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 2px;
+    max-width: 80px;
+    word-break: break-all;
+}
+
+.color-scheme-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}

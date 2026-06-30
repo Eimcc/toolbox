@@ -33,6 +33,11 @@
             <div class="icon-label">图片编辑器</div>
         </div>
 
+        <div class="desktop-icon" id="colorToolIcon" style="top: 420px; left: 20px;">
+            <div class="icon-image">🎨</div>
+            <div class="icon-label">配色工具</div>
+        </div>
+
 
         <!-- 图片转换器窗口 -->
         <div class="window" id="imageConverterWindow">
@@ -200,6 +205,93 @@
                 </div>
                 
                 <div class="status" id="editorStatus">就绪</div>
+            </div>
+        </div>
+
+        <!-- 配色工具窗口 -->
+        <div class="window" id="colorToolWindow">
+            <div class="window-titlebar">
+                <div class="window-title">配色工具</div>
+                <div class="window-controls">
+                    <div class="control-button" id="colorToolMinimizeButton">_</div>
+                    <div class="control-button" id="colorToolMaximizeButton">□</div>
+                    <div class="control-button" id="colorToolCloseButton">×</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="title">选择颜色并生成配色方案</div>
+                
+                <div class="color-tool-layout">
+                    <!-- 左侧：色轮和颜色输入 -->
+                    <div class="color-tool-left">
+                        <div class="color-wheel-container">
+                            <canvas id="colorWheelCanvas" width="240" height="240"></canvas>
+                            <div id="colorWheelMarker" class="color-wheel-marker"></div>
+                        </div>
+                        
+                        <div class="color-input-section">
+                            <div class="color-preview" id="colorPreview"></div>
+                            
+                            <div class="color-input-group">
+                                <label>HEX:</label>
+                                <input type="text" id="hexInput" placeholder="#FF5733" maxlength="7">
+                            </div>
+                            
+                            <div class="color-input-group">
+                                <label>R:</label>
+                                <input type="number" id="rgbRInput" min="0" max="255" placeholder="255">
+                                <label>G:</label>
+                                <input type="number" id="rgbGInput" min="0" max="255" placeholder="87">
+                                <label>B:</label>
+                                <input type="number" id="rgbBInput" min="0" max="255" placeholder="51">
+                            </div>
+                            
+                            <div class="color-input-group">
+                                <label>H:</label>
+                                <input type="number" id="hslHInput" min="0" max="360" placeholder="9">
+                                <label>S:</label>
+                                <input type="number" id="hslSInput" min="0" max="100" placeholder="100">
+                                <label>L:</label>
+                                <input type="number" id="hslLInput" min="0" max="100" placeholder="60">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧：配色方案 -->
+                    <div class="color-tool-right">
+                        <div class="color-scheme-selector">
+                            <label>配色方案：</label>
+                            <select id="colorSchemeSelect" class="format-select">
+                                <option value="complementary">互补色</option>
+                                <option value="triadic">对比色（三元）</option>
+                                <option value="analogous">类似色</option>
+                                <option value="split-complementary">分裂互补</option>
+                                <option value="tetradic">矩形/四色</option>
+                                <option value="monochromatic">单色</option>
+                            </select>
+                        </div>
+                        
+                        <div class="color-count-selector">
+                            <label>配色数量：</label>
+                            <div class="color-count-controls">
+                                <button class="button" id="decreaseColorCount">-</button>
+                                <span id="colorCountDisplay">3</span>
+                                <button class="button" id="increaseColorCount">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="color-scheme-display">
+                            <div class="color-scheme-colors" id="colorSchemeColors"></div>
+                        </div>
+                        
+                        <div class="color-scheme-actions">
+                            <button class="button" id="copyColorCodes">复制颜色代码</button>
+                            <button class="button" id="exportColorSVG">导出SVG</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status" id="colorToolStatus">就绪</div>
             </div>
         </div>
 
