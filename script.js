@@ -70,11 +70,31 @@ function initWindowControls() {
     }
 
     // 添加窗口拖动功能
-    const windows = [
-        { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar'), name: '视频格式转换器' },
-        { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar'), name: '音频格式转换器' },
-        { window: colorToolWindow, titlebar: colorToolWindow.querySelector('.window-titlebar'), name: '配色工具' }
-    ];
+    const windows = [];
+    
+    if (videoConverterWindow) {
+        windows.push({ 
+            window: videoConverterWindow, 
+            titlebar: videoConverterWindow.querySelector('.window-titlebar'), 
+            name: '视频格式转换器' 
+        });
+    }
+    
+    if (audioConverterWindow) {
+        windows.push({ 
+            window: audioConverterWindow, 
+            titlebar: audioConverterWindow.querySelector('.window-titlebar'), 
+            name: '音频格式转换器' 
+        });
+    }
+    
+    if (colorToolWindow) {
+        windows.push({ 
+            window: colorToolWindow, 
+            titlebar: colorToolWindow.querySelector('.window-titlebar'), 
+            name: '配色工具' 
+        });
+    }
 
     // 初始化任务栏标签功能
     initTaskbarLabels(windows);
