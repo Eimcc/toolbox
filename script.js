@@ -1310,13 +1310,29 @@ function initColorTool() {
 
 // 配色工具窗口控制（在 init() 中调用 initColorToolEvents）
 function initColorToolEvents() {
+    console.log('initColorToolEvents called:', {
+        colorToolIcon: !!colorToolIcon,
+        colorToolWindow: !!colorToolWindow,
+        colorToolCloseButton: !!colorToolCloseButton,
+        colorToolMinimizeButton: !!colorToolMinimizeButton
+    });
+    
     if (colorToolIcon && colorToolWindow) {
         colorToolIcon.addEventListener('click', () => {
-            colorToolWindow.classList.add('active');
-            colorToolWindow.classList.remove('minimized');
-            bringWindowToFront(colorToolWindow);
-            initColorTool();
+            console.log('Color tool icon clicked!');
+            try {
+                colorToolWindow.classList.add('active');
+                colorToolWindow.classList.remove('minimized');
+                bringWindowToFront(colorToolWindow);
+                initColorTool();
+                console.log('Color tool window opened successfully');
+            } catch (e) {
+                console.error('Error opening color tool:', e);
+            }
         });
+        console.log('Color tool icon click handler bound');
+    } else {
+        console.error('Cannot bind color tool events: missing elements');
     }
 
     if (colorToolCloseButton && colorToolWindow) {
