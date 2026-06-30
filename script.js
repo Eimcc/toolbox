@@ -929,7 +929,11 @@ setInterval(updateClock, 60000);
 updateClock();
 
 // 配色工具功能
+let colorToolInitialized = false;
 function initColorTool() {
+    if (colorToolInitialized) return;
+    colorToolInitialized = true;
+    
     const colorWheelCanvas = document.getElementById('colorWheelCanvas');
     const colorWheelMarker = document.getElementById('colorWheelMarker');
     const colorPreview = document.getElementById('colorPreview');
