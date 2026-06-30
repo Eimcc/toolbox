@@ -859,12 +859,14 @@ function init() {
     console.log('DOMElements initialized:', {
         videoConverterIcon: !!videoConverterIcon,
         audioConverterIcon: !!audioConverterIcon,
-        colorToolIcon: !!colorToolIcon
+        colorToolIcon: !!colorToolIcon,
+        colorToolWindow: !!colorToolWindow
     });
     drawDesktopBackground();
+    // 先初始化配色工具事件，确保图标点击功能正常
+    initColorToolEvents();
     initWindowControls();
     initEventListeners();
-    initColorToolEvents();
     console.log('Application initialization complete!');
 }
 
@@ -1333,7 +1335,7 @@ function initColorToolEvents() {
 }
 
 // 将窗口置于最前
-function bringWindowToFront(window) {
+function bringWindowToFront(targetWindow) {
     const windows = document.querySelectorAll('.window');
     let maxZIndex = 10;
     windows.forEach(w => {
@@ -1342,7 +1344,7 @@ function bringWindowToFront(window) {
             maxZIndex = zIndex;
         }
     });
-    window.style.zIndex = maxZIndex + 1;
+    targetWindow.style.zIndex = maxZIndex + 1;
 }
 
 // 绘制桌面背景
