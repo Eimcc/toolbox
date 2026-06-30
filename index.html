@@ -154,6 +154,112 @@
             </div>
         </div>
 
+        <!-- 图片编辑器工作窗口 -->
+        <div class="window" id="editorWorkWindow">
+            <div class="window-titlebar">
+                <div class="window-title">图片编辑器 - 编辑中</div>
+                <div class="window-controls">
+                    <div class="control-button" id="editorWorkMinButton">_</div>
+                    <div class="control-button" id="editorWorkMaxButton">□</div>
+                    <div class="control-button" id="editorWorkCloseButton">×</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="editor-layout">
+                    <div class="editor-controls">
+                        <div class="control-tabs">
+                            <div class="tab active" data-tab="crop">
+                                <span class="tab-icon">✂️</span>
+                                <span class="tab-text">裁剪</span>
+                            </div>
+                            <div class="tab" data-tab="adjust">
+                                <span class="tab-icon">🎨</span>
+                                <span class="tab-text">调整</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 裁剪面板 -->
+                        <div class="tab-content active" id="cropPanel">
+                            <div class="control-group">
+                                <label class="control-label">裁剪比例</label>
+                                <select id="cropRatio" class="format-select">
+                                    <option value="free">自由裁剪</option>
+                                    <option value="1:1">1:1 (正方形)</option>
+                                    <option value="4:3">4:3</option>
+                                    <option value="16:9">16:9</option>
+                                    <option value="3:2">3:2</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">预设模板</label>
+                                <select id="cropPreset" class="format-select">
+                                    <option value="none">选择模板</option>
+                                    <option value="a4-portrait">A4 竖版 (210x297mm)</option>
+                                    <option value="a4-landscape">A4 横版 (297x210mm)</option>
+                                    <option value="a3-portrait">A3 竖版 (297x420mm)</option>
+                                    <option value="a3-landscape">A3 横版 (420x297mm)</option>
+                                    <option value="id-1inch">一寸照 (25x35mm)</option>
+                                    <option value="id-2inch">二寸照 (35x49mm)</option>
+                                    <option value="instagram">Instagram (1080x1080)</option>
+                                    <option value="cover-facebook">Facebook 封面 (820x312)</option>
+                                    <option value="cover-twitter">Twitter 封面 (1500x500)</option>
+                                </select>
+                            </div>
+                            <div class="button-area">
+                                <button class="button" id="applyCrop">应用裁剪</button>
+                                <button class="button" id="resetCrop">重置裁剪</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 调整面板 -->
+                        <div class="tab-content" id="adjustPanel">
+                            <div class="control-group">
+                                <label class="control-label">亮度: <span id="brightnessValue">0</span></label>
+                                <input type="range" id="brightness" class="slider" min="-100" max="100" value="0">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">对比度: <span id="contrastValue">0</span></label>
+                                <input type="range" id="contrast" class="slider" min="-100" max="100" value="0">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">饱和度: <span id="saturationValue">0</span></label>
+                                <input type="range" id="saturation" class="slider" min="-100" max="100" value="0">
+                            </div>
+                            <div class="control-group">
+                                <div class="effect-buttons">
+                                    <button class="button" id="grayscaleEffect">黑白</button>
+                                    <button class="button" id="invertEffect">反向</button>
+                                    <button class="button" id="sepiaEffect">复古</button>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <div class="effect-buttons">
+                                    <button class="button" id="rotateLeft">左旋转90°</button>
+                                    <button class="button" id="rotateRight">右旋转90°</button>
+                                    <button class="button" id="flipHorizontal">水平翻转</button>
+                                    <button class="button" id="flipVertical">垂直翻转</button>
+                                </div>
+                            </div>
+                            <div class="button-area">
+                                <button class="button" id="applyAdjust">应用调整</button>
+                                <button class="button" id="resetAdjust">重置调整</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editor-preview">
+                        <canvas id="editorCanvas" class="editor-canvas"></canvas>
+                        <div class="crop-overlay" id="cropOverlay" style="display: none;">
+                            <div class="crop-box" id="cropBox"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="editor-footer">
+                    <button class="button" id="saveEditor">保存编辑</button>
+                    <button class="button" id="cancelEditor">取消</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 配色工具窗口 -->
         <div class="window" id="colorToolWindow">
             <div class="window-titlebar">
