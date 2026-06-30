@@ -172,6 +172,7 @@ let imageConverterIcon, imageConverterWindow, imageCloseButton, imageMinimizeBut
 let videoConverterIcon, videoConverterWindow, videoCloseButton, videoMinimizeButton, videoUploadArea, videoUploadIcon, videoUploadText, videoFileInput, videoFileList, videoTargetFormat, videoConvertButton, videoDownloadButton, videoResetButton, videoStatus, videoProgressContainer, videoProgressBar;
 let audioConverterIcon, audioConverterWindow, audioCloseButton, audioMinimizeButton, audioUploadArea, audioUploadIcon, audioUploadText, audioFileInput, audioFileList, audioTargetFormat, audioConvertButton, audioDownloadButton, audioResetButton, audioStatus, audioProgressContainer, audioProgressBar;
 let imageEditorIcon, imageEditorWindow, imageEditorCloseButton, imageEditorMinimizeButton, imageEditorUploadArea, imageEditorUploadIcon, imageEditorUploadText, imageEditorFileInput, imageEditorFileList, imageEditorEditButton, imageEditorStatus, imageEditorProgressContainer, imageEditorProgressBar;
+let colorToolIcon, colorToolWindow, colorToolCloseButton, colorToolMinimizeButton;
 let editWorkspaceWindow, editWorkspaceCloseButton, editWorkspaceMinimizeButton, editWorkspaceCanvas, editWorkspaceCropBox, editWorkspaceToolPanel, editWorkspaceToolCrop, editWorkspaceToolAdjust, editWorkspaceToolFilter, editWorkspaceToolRotate, editWorkspaceToolFlip, editWorkspaceToolDraw, editWorkspaceToolText, editWorkspaceToolSticker, editWorkspaceControlPanel, editWorkspaceControlCrop, editWorkspaceControlAdjust, editWorkspaceControlFilter, editWorkspaceControlRotate, editWorkspaceControlFlip, editWorkspaceControlDraw, editWorkspaceControlText, editWorkspaceControlSticker, editWorkspaceCancelButton, editWorkspaceApplyButton, editWorkspaceDownloadButton, editWorkspaceResetButton, editWorkspacePresetRatios, editWorkspaceCropWidth, editWorkspaceCropHeight, editWorkspaceCropLock, editWorkspaceCropApply, editWorkspaceCropCancel, editWorkspaceCropReset, editWorkspaceBrightness, editWorkspaceContrast, editWorkspaceSaturation, editWorkspaceSharpness, editWorkspaceAdjustApply, editWorkspaceAdjustCancel, editWorkspaceAdjustReset, editWorkspaceFilterNone, editWorkspaceFilterGrayscale, editWorkspaceFilterSepia, editWorkspaceFilterVintage, editWorkspaceFilterBlackWhite, editWorkspaceFilterInvert, editWorkspaceFilterApply, editWorkspaceFilterCancel, editWorkspaceFilterReset, editWorkspaceRotate90, editWorkspaceRotate180, editWorkspaceRotate270, editWorkspaceRotateApply, editWorkspaceRotateCancel, editWorkspaceRotateReset, editWorkspaceFlipHorizontal, editWorkspaceFlipVertical, editWorkspaceFlipApply, editWorkspaceFlipCancel, editWorkspaceFlipReset, editWorkspaceDrawColor, editWorkspaceDrawSize, editWorkspaceDrawApply, editWorkspaceDrawCancel, editWorkspaceDrawReset, editWorkspaceTextInput, editWorkspaceTextColor, editWorkspaceTextSize, editWorkspaceTextApply, editWorkspaceTextCancel, editWorkspaceTextReset, editWorkspaceStickerSelect, editWorkspaceStickerSize, editWorkspaceStickerApply, editWorkspaceStickerCancel, editWorkspaceStickerReset;
 let canvas, ctx, cropBox, imageContainer, toolPanel, toolCrop, toolAdjust, toolFilter, toolRotate, toolFlip, toolDraw, toolText, toolSticker, controlPanel, controlCrop, controlAdjust, controlFilter, controlRotate, controlFlip, controlDraw, controlText, controlSticker, cancelButton, applyButton, downloadButton, resetButton, presetRatios, cropWidth, cropHeight, cropLock, cropApply, cropCancel, cropReset, brightness, contrast, saturation, sharpness, adjustApply, adjustCancel, adjustReset, filterNone, filterGrayscale, filterSepia, filterVintage, filterBlackWhite, filterInvert, filterApply, filterCancel, filterReset, rotate90, rotate180, rotate270, rotateApply, rotateCancel, rotateReset, flipHorizontal, flipVertical, flipApply, flipCancel, flipReset, drawColor, drawSize, drawApply, drawCancel, drawReset, textInput, textColor, textSize, textApply, textCancel, textReset, stickerSelect, stickerSize, stickerApply, stickerCancel, stickerReset;
 
@@ -292,7 +293,8 @@ function initWindowControls() {
         { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar'), name: '图片格式转换器' },
         { window: videoConverterWindow, titlebar: videoConverterWindow.querySelector('.window-titlebar'), name: '视频格式转换器' },
         { window: audioConverterWindow, titlebar: audioConverterWindow.querySelector('.window-titlebar'), name: '音频格式转换器' },
-        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar'), name: '图片编辑器' }
+        { window: imageEditorWindow, titlebar: imageEditorWindow.querySelector('.window-titlebar'), name: '图片编辑器' },
+        { window: colorToolWindow, titlebar: colorToolWindow.querySelector('.window-titlebar'), name: '配色工具' }
     ];
 
     // 初始化任务栏标签功能
@@ -1608,6 +1610,12 @@ function initDOMElements() {
     imageEditorStatus = document.getElementById('imageEditorStatus');
     imageEditorProgressContainer = document.getElementById('imageEditorProgressContainer');
     imageEditorProgressBar = document.getElementById('imageEditorProgressBar');
+
+    // 配色工具元素
+    colorToolIcon = document.getElementById('colorToolIcon');
+    colorToolWindow = document.getElementById('colorToolWindow');
+    colorToolCloseButton = document.getElementById('colorToolCloseButton');
+    colorToolMinimizeButton = document.getElementById('colorToolMinimizeButton');
 
     // 编辑工作区元素
     editWorkspaceWindow = document.getElementById('editWorkspaceWindow');
@@ -3512,3 +3520,401 @@ function initTaskbarLabels(windows) {
 // 启动时钟更新
 setInterval(updateClock, 60000);
 updateClock();
+
+// 配色工具功能
+function initColorTool() {
+    const colorWheelCanvas = document.getElementById('colorWheelCanvas');
+    const colorWheelMarker = document.getElementById('colorWheelMarker');
+    const colorPreview = document.getElementById('colorPreview');
+    const hexInput = document.getElementById('hexInput');
+    const rgbRInput = document.getElementById('rgbRInput');
+    const rgbGInput = document.getElementById('rgbGInput');
+    const rgbBInput = document.getElementById('rgbBInput');
+    const hslHInput = document.getElementById('hslHInput');
+    const hslSInput = document.getElementById('hslSInput');
+    const hslLInput = document.getElementById('hslLInput');
+    const colorSchemeSelect = document.getElementById('colorSchemeSelect');
+    const colorCountDisplay = document.getElementById('colorCountDisplay');
+    const decreaseColorCount = document.getElementById('decreaseColorCount');
+    const increaseColorCount = document.getElementById('increaseColorCount');
+    const colorSchemeColors = document.getElementById('colorSchemeColors');
+    const copyColorCodes = document.getElementById('copyColorCodes');
+    const exportColorSVG = document.getElementById('exportColorSVG');
+    const colorToolStatus = document.getElementById('colorToolStatus');
+    
+    let currentColor = { r: 255, g: 87, b: 51 };
+    let colorCount = 3;
+    
+    // 绘制色轮
+    function drawColorWheel() {
+        const ctx = colorWheelCanvas.getContext('2d');
+        const centerX = colorWheelCanvas.width / 2;
+        const centerY = colorWheelCanvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 2;
+        
+        ctx.clearRect(0, 0, colorWheelCanvas.width, colorWheelCanvas.height);
+        
+        // 绘制色轮
+        for (let angle = 0; angle < 360; angle += 1) {
+            const startAngle = (angle - 1) * Math.PI / 180;
+            const endAngle = (angle + 1) * Math.PI / 180;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.closePath();
+            
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            gradient.addColorStop(0, `hsl(${angle}, 10%, 90%)`);
+            gradient.addColorStop(0.5, `hsl(${angle}, 70%, 60%)`);
+            gradient.addColorStop(1, `hsl(${angle}, 100%, 50%)`);
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+    }
+    
+    // RGB转HSL
+    function rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                case b: h = ((r - g) / d + 4) / 6; break;
+            }
+        }
+        
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            l: Math.round(l * 100)
+        };
+    }
+    
+    // HSL转RGB
+    function hslToRgb(h, s, l) {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        
+        let r, g, b;
+        
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        
+        return {
+            r: Math.round(r * 255),
+            g: Math.round(g * 255),
+            b: Math.round(b * 255)
+        };
+    }
+    
+    // RGB转HEX
+    function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('').toUpperCase();
+    }
+    
+    // HEX转RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+    
+    // 更新颜色显示
+    function updateColorDisplay() {
+        const hex = rgbToHex(currentColor.r, currentColor.g, currentColor.b);
+        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+        
+        colorPreview.style.backgroundColor = hex;
+        hexInput.value = hex;
+        rgbRInput.value = currentColor.r;
+        rgbGInput.value = currentColor.g;
+        rgbBInput.value = currentColor.b;
+        hslHInput.value = hsl.h;
+        hslSInput.value = hsl.s;
+        hslLInput.value = hsl.l;
+        
+        updateColorScheme();
+    }
+    
+    // 生成配色方案
+    function generateColorScheme(h, s, l, scheme, count) {
+        const colors = [];
+        
+        switch (scheme) {
+            case 'complementary':
+                colors.push({ h, s, l });
+                colors.push({ h: (h + 180) % 360, s, l });
+                break;
+                
+            case 'triadic':
+                colors.push({ h, s, l });
+                colors.push({ h: (h + 120) % 360, s, l });
+                colors.push({ h: (h + 240) % 360, s, l });
+                break;
+                
+            case 'analogous':
+                const step = 30;
+                const startH = (h - Math.floor(count / 2) * step + 360) % 360;
+                for (let i = 0; i < count; i++) {
+                    colors.push({ h: (startH + i * step) % 360, s, l });
+                }
+                break;
+                
+            case 'split-complementary':
+                colors.push({ h, s, l });
+                colors.push({ h: (h + 150) % 360, s, l });
+                colors.push({ h: (h + 210) % 360, s, l });
+                break;
+                
+            case 'tetradic':
+                colors.push({ h, s, l });
+                colors.push({ h: (h + 90) % 360, s, l });
+                colors.push({ h: (h + 180) % 360, s, l });
+                colors.push({ h: (h + 270) % 360, s, l });
+                break;
+                
+            case 'monochromatic':
+                const lStep = 80 / (count + 1);
+                for (let i = 1; i <= count; i++) {
+                    colors.push({ h, s, l: 10 + i * lStep });
+                }
+                break;
+        }
+        
+        return colors.map(c => hslToRgb(c.h, c.s, c.l));
+    }
+    
+    // 更新配色方案显示
+    function updateColorScheme() {
+        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+        const scheme = colorSchemeSelect.value;
+        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        
+        colorSchemeColors.innerHTML = '';
+        
+        colors.forEach(color => {
+            const hex = rgbToHex(color.r, color.g, color.b);
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.innerHTML = `
+                <div class="color-swatch-box" style="background-color: ${hex}"></div>
+                <div class="color-swatch-info">${hex}</div>
+            `;
+            swatch.addEventListener('click', () => {
+                navigator.clipboard.writeText(hex).then(() => {
+                    colorToolStatus.textContent = `已复制: ${hex}`;
+                    setTimeout(() => {
+                        colorToolStatus.textContent = '就绪';
+                    }, 2000);
+                });
+            });
+            colorSchemeColors.appendChild(swatch);
+        });
+    }
+    
+    // 色轮点击事件
+    colorWheelCanvas.addEventListener('click', (e) => {
+        const rect = colorWheelCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = colorWheelCanvas.width / 2;
+        const centerY = colorWheelCanvas.height / 2;
+        
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const radius = Math.min(centerX, centerY) - 2;
+        
+        if (distance <= radius) {
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            if (angle < 0) angle += 360;
+            
+            const saturation = Math.min(100, (distance / radius) * 100);
+            const lightness = 50;
+            
+            const rgb = hslToRgb(angle, saturation, lightness);
+            currentColor = rgb;
+            
+            colorWheelMarker.style.left = `${x}px`;
+            colorWheelMarker.style.top = `${y}px`;
+            colorWheelMarker.style.backgroundColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+            
+            updateColorDisplay();
+        }
+    });
+    
+    // HEX输入
+    hexInput.addEventListener('change', () => {
+        const rgb = hexToRgb(hexInput.value);
+        if (rgb) {
+            currentColor = rgb;
+            updateColorDisplay();
+        }
+    });
+    
+    // RGB输入
+    [rgbRInput, rgbGInput, rgbBInput].forEach(input => {
+        input.addEventListener('change', () => {
+            currentColor = {
+                r: parseInt(rgbRInput.value) || 0,
+                g: parseInt(rgbGInput.value) || 0,
+                b: parseInt(rgbBInput.value) || 0
+            };
+            updateColorDisplay();
+        });
+    });
+    
+    // HSL输入
+    [hslHInput, hslSInput, hslLInput].forEach(input => {
+        input.addEventListener('change', () => {
+            const rgb = hslToRgb(
+                parseInt(hslHInput.value) || 0,
+                parseInt(hslSInput.value) || 0,
+                parseInt(hslLInput.value) || 0
+            );
+            currentColor = rgb;
+            updateColorDisplay();
+        });
+    });
+    
+    // 配色方案选择
+    colorSchemeSelect.addEventListener('change', updateColorScheme);
+    
+    // 配色数量控制
+    decreaseColorCount.addEventListener('click', () => {
+        if (colorCount > 2) {
+            colorCount--;
+            colorCountDisplay.textContent = colorCount;
+            updateColorScheme();
+        }
+    });
+    
+    increaseColorCount.addEventListener('click', () => {
+        if (colorCount < 12) {
+            colorCount++;
+            colorCountDisplay.textContent = colorCount;
+            updateColorScheme();
+        }
+    });
+    
+    // 复制颜色代码
+    copyColorCodes.addEventListener('click', () => {
+        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+        const scheme = colorSchemeSelect.value;
+        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        const codes = colors.map(c => rgbToHex(c.r, c.g, c.b)).join('\n');
+        
+        navigator.clipboard.writeText(codes).then(() => {
+            colorToolStatus.textContent = '已复制所有颜色代码';
+            setTimeout(() => {
+                colorToolStatus.textContent = '就绪';
+            }, 2000);
+        });
+    });
+    
+    // 导出SVG
+    exportColorSVG.addEventListener('click', () => {
+        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+        const scheme = colorSchemeSelect.value;
+        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        
+        const svgWidth = 800;
+        const svgHeight = 400;
+        const colorWidth = svgWidth / colors.length;
+        
+        let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        svgContent += `<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">\n`;
+        svgContent += `  <rect width="${svgWidth}" height="${svgHeight}" fill="#f0f0f0"/>\n`;
+        
+        colors.forEach((color, index) => {
+            const hex = rgbToHex(color.r, color.g, color.b);
+            const x = index * colorWidth;
+            
+            svgContent += `  <rect x="${x}" y="50" width="${colorWidth}" height="200" fill="${hex}"/>\n`;
+            svgContent += `  <text x="${x + colorWidth/2}" y="280" text-anchor="middle" font-family="Arial" font-size="14" fill="#000">${hex}</text>\n`;
+            svgContent += `  <text x="${x + colorWidth/2}" y="300" text-anchor="middle" font-family="Arial" font-size="11" fill="#666">RGB(${color.r}, ${color.g}, ${color.b})</text>\n`;
+        });
+        
+        svgContent += `  <text x="${svgWidth/2}" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#000">配色方案: ${colorSchemeSelect.options[colorSchemeSelect.selectedIndex].text}</text>\n`;
+        svgContent += `</svg>`;
+        
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `color-scheme-${Date.now()}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        colorToolStatus.textContent = 'SVG已导出';
+        setTimeout(() => {
+            colorToolStatus.textContent = '就绪';
+        }, 2000);
+    });
+    
+    // 初始化
+    drawColorWheel();
+    updateColorDisplay();
+}
+
+// 配色工具窗口控制
+if (colorToolIcon && colorToolWindow) {
+    colorToolIcon.addEventListener('click', () => {
+        colorToolWindow.classList.add('active');
+        colorToolWindow.classList.remove('minimized');
+        bringWindowToFront(colorToolWindow);
+        initColorTool();
+    });
+}
+
+if (colorToolCloseButton && colorToolWindow) {
+    colorToolCloseButton.addEventListener('click', () => {
+        colorToolWindow.classList.remove('active');
+        colorToolWindow.classList.remove('minimized');
+    });
+}
+
+if (colorToolMinimizeButton && colorToolWindow) {
+    colorToolMinimizeButton.addEventListener('click', () => {
+        colorToolWindow.classList.remove('active');
+        colorToolWindow.classList.add('minimized');
+    });
+}
