@@ -22,7 +22,12 @@
             <div class="icon-label">音频格式转换器</div>
         </div>
 
-        <div class="desktop-icon" id="colorToolIcon" style="top: 220px; left: 20px;">
+        <div class="desktop-icon" id="imageEditorIcon" style="top: 220px; left: 20px;">
+            <div class="icon-image">✏️</div>
+            <div class="icon-label">图片编辑器</div>
+        </div>
+
+        <div class="desktop-icon" id="colorToolIcon" style="top: 320px; left: 20px;">
             <div class="icon-image">🎨</div>
             <div class="icon-label">配色工具</div>
         </div>
@@ -115,6 +120,37 @@
                 </div>
                 
                 <div class="status" id="audioStatus">就绪</div>
+            </div>
+        </div>
+
+        <!-- 图片编辑器窗口 -->
+        <div class="window" id="imageEditorWindow">
+            <div class="window-titlebar">
+                <div class="window-title">图片编辑器</div>
+                <div class="window-controls">
+                    <div class="control-button" id="imageEditorMinButton">_</div>
+                    <div class="control-button" id="imageEditorMaxButton">□</div>
+                    <div class="control-button" id="imageEditorCloseButton">×</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="title">选择图片进行编辑</div>
+                
+                <!-- 上传区域 -->
+                <div class="upload-file-area" id="editorUploadArea">
+                    <input type="file" id="editorFileInput" accept="image/*,.heic" style="display: none;">
+                    <div class="upload-icon" id="editorUploadIcon">📁</div>
+                    <div class="upload-text" id="editorUploadText">点击或拖拽图片到此处<br>支持JPG、PNG、WebP、GIF、HEIC格式</div>
+                    <div class="file-list" id="editorFileList"></div>
+                </div>
+                
+                <div class="button-area" id="editorButtonArea">
+                    <button class="button" id="openEditorButton" disabled>打开编辑器</button>
+                    <button class="button" id="editorDownloadButton" disabled>下载</button>
+                    <button class="button" id="editorResetButton">清空</button>
+                </div>
+                
+                <div class="status" id="editorStatus">就绪</div>
             </div>
         </div>
 
