@@ -883,9 +883,8 @@ function init() {
         colorToolWindow: !!colorToolWindow
     });
     drawDesktopBackground();
-    // 先初始化配色工具事件，确保图标点击功能正常
-    initColorToolEvents();
     initWindowControls();
+    initColorToolEvents();
     initEventListeners();
     console.log('Application initialization complete!');
 }
