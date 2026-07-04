@@ -288,6 +288,30 @@ function initWindowControls() {
         }
     }
 
+    // 配色工具窗口控制
+    if (colorToolIcon && colorToolWindow) {
+        colorToolIcon.addEventListener('click', () => {
+            colorToolWindow.classList.add('active');
+            colorToolWindow.classList.remove('minimized');
+            bringWindowToFront(colorToolWindow);
+            initColorTool();
+        });
+    }
+
+    if (colorToolCloseButton && colorToolWindow) {
+        colorToolCloseButton.addEventListener('click', () => {
+            colorToolWindow.classList.remove('active');
+            colorToolWindow.classList.remove('minimized');
+        });
+    }
+
+    if (colorToolMinimizeButton && colorToolWindow) {
+        colorToolMinimizeButton.addEventListener('click', () => {
+            colorToolWindow.classList.remove('active');
+            colorToolWindow.classList.add('minimized');
+        });
+    }
+
     // 添加窗口拖动功能
     const windows = [
         { window: imageConverterWindow, titlebar: imageConverterWindow.querySelector('.window-titlebar'), name: '图片格式转换器' },
@@ -4113,28 +4137,4 @@ function initColorTool() {
     // 初始化
     drawColorWheel();
     updateColorDisplay();
-}
-
-// 配色工具窗口控制
-if (colorToolIcon && colorToolWindow) {
-    colorToolIcon.addEventListener('click', () => {
-        colorToolWindow.classList.add('active');
-        colorToolWindow.classList.remove('minimized');
-        bringWindowToFront(colorToolWindow);
-        initColorTool();
-    });
-}
-
-if (colorToolCloseButton && colorToolWindow) {
-    colorToolCloseButton.addEventListener('click', () => {
-        colorToolWindow.classList.remove('active');
-        colorToolWindow.classList.remove('minimized');
-    });
-}
-
-if (colorToolMinimizeButton && colorToolWindow) {
-    colorToolMinimizeButton.addEventListener('click', () => {
-        colorToolWindow.classList.remove('active');
-        colorToolWindow.classList.add('minimized');
-    });
 }
