@@ -698,12 +698,12 @@ body {
 /* 配色工具样式 */
 #colorToolWindow {
     width: 900px;
-    height: 650px;
+    height: 720px;
 }
 
 .color-tool-layout {
     display: flex;
-    gap: 20px;
+    gap: 16px;
     flex: 1;
     overflow: hidden;
 }
@@ -711,14 +711,17 @@ body {
 .color-tool-left {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    min-width: 280px;
+    gap: 10px;
+    min-width: 250px;
+    max-width: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .color-wheel-container {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 180px;
+    height: 180px;
     margin: 0 auto;
     cursor: crosshair;
 }
@@ -727,6 +730,8 @@ body {
     border: 2px solid;
     border-color: #aca899 #fff #fff #aca899;
     background: white;
+    width: 180px;
+    height: 180px;
 }
 
 .color-wheel-marker {
@@ -743,12 +748,12 @@ body {
 .color-input-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .color-preview {
     width: 100%;
-    height: 60px;
+    height: 40px;
     border: 2px solid;
     border-color: #aca899 #fff #fff #aca899;
     background-color: #FF5733;
@@ -875,4 +880,82 @@ body {
     display: flex;
     gap: 12px;
     justify-content: center;
+}
+
+.color-image-section {
+    border-top: 1px solid #aca899;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.color-image-section .control-label {
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.color-image-upload {
+    width: 100%;
+    height: 100px;
+    border: 2px solid;
+    border-color: #aca899 #fff #fff #aca899;
+    background-color: #ffffff;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.color-image-upload:hover,
+.color-image-upload.dragover {
+    border-color: #000080;
+    background-color: #e8e8e8;
+}
+
+.color-image-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.color-image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.color-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #808080;
+}
+
+.upload-icon-small {
+    font-size: 24px;
+}
+
+.upload-text-small {
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.color-image-section .button-area {
+    display: flex;
+    gap: 8px;
+}
+
+.color-image-section .button {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 11px;
 }

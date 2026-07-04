@@ -3522,7 +3522,11 @@ setInterval(updateClock, 60000);
 updateClock();
 
 // 配色工具功能
+let colorToolInitialized = false;
 function initColorTool() {
+    if (colorToolInitialized) return;
+    colorToolInitialized = true;
+    
     const colorWheelCanvas = document.getElementById('colorWheelCanvas');
     const colorWheelMarker = document.getElementById('colorWheelMarker');
     const colorPreview = document.getElementById('colorPreview');
@@ -3541,9 +3545,18 @@ function initColorTool() {
     const copyColorCodes = document.getElementById('copyColorCodes');
     const exportColorSVG = document.getElementById('exportColorSVG');
     const colorToolStatus = document.getElementById('colorToolStatus');
+    const colorImageUpload = document.getElementById('colorImageUpload');
+    const colorImageInput = document.getElementById('colorImageInput');
+    const colorImagePreview = document.getElementById('colorImagePreview');
+    const colorImagePlaceholder = document.getElementById('colorImagePlaceholder');
+    const colorPreviewImg = document.getElementById('colorPreviewImg');
+    const extractColorsBtn = document.getElementById('extractColorsBtn');
+    const clearImageBtn = document.getElementById('clearImageBtn');
     
     let currentColor = { r: 255, g: 87, b: 51 };
     let colorCount = 3;
+    let extractedImageColors = [];
+    let uploadedImage = null;
     
     // 绘制色轮
     function drawColorWheel() {
@@ -3724,11 +3737,25 @@ function initColorTool() {
     
     // 更新配色方案显示
     function updateColorScheme() {
-        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
         const scheme = colorSchemeSelect.value;
-        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        let colors;
+        
+        if (scheme === 'from-image') {
+            colors = extractedImageColors;
+        } else {
+            const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+            colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        }
         
         colorSchemeColors.innerHTML = '';
+        
+        if (colors.length === 0 && scheme === 'from-image') {
+            const hint = document.createElement('div');
+            hint.style.cssText = 'text-align:center;color:#808080;padding:20px;font-size:11px;';
+            hint.textContent = '请上传图片并点击"提取配色"按钮';
+            colorSchemeColors.appendChild(hint);
+            return;
+        }
         
         colors.forEach(color => {
             const hex = rgbToHex(color.r, color.g, color.b);
@@ -3837,9 +3864,13 @@ function initColorTool() {
     
     // 复制颜色代码
     copyColorCodes.addEventListener('click', () => {
-        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
-        const scheme = colorSchemeSelect.value;
-        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        let colors;
+        if (colorSchemeSelect.value === 'from-image') {
+            colors = extractedImageColors;
+        } else {
+            const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+            colors = generateColorScheme(hsl.h, hsl.s, hsl.l, colorSchemeSelect.value, colorCount);
+        }
         const codes = colors.map(c => rgbToHex(c.r, c.g, c.b)).join('\n');
         
         navigator.clipboard.writeText(codes).then(() => {
@@ -3852,9 +3883,18 @@ function initColorTool() {
     
     // 导出SVG
     exportColorSVG.addEventListener('click', () => {
-        const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
-        const scheme = colorSchemeSelect.value;
-        const colors = generateColorScheme(hsl.h, hsl.s, hsl.l, scheme, colorCount);
+        let colors;
+        let schemeName;
+        if (colorSchemeSelect.value === 'from-image') {
+            colors = extractedImageColors;
+            schemeName = '从图片提取';
+        } else {
+            const hsl = rgbToHsl(currentColor.r, currentColor.g, currentColor.b);
+            colors = generateColorScheme(hsl.h, hsl.s, hsl.l, colorSchemeSelect.value, colorCount);
+            schemeName = colorSchemeSelect.options[colorSchemeSelect.selectedIndex].text;
+        }
+        
+        if (colors.length === 0) return;
         
         const svgWidth = 800;
         const svgHeight = 400;
@@ -3873,7 +3913,7 @@ function initColorTool() {
             svgContent += `  <text x="${x + colorWidth/2}" y="300" text-anchor="middle" font-family="Arial" font-size="11" fill="#666">RGB(${color.r}, ${color.g}, ${color.b})</text>\n`;
         });
         
-        svgContent += `  <text x="${svgWidth/2}" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#000">配色方案: ${colorSchemeSelect.options[colorSchemeSelect.selectedIndex].text}</text>\n`;
+        svgContent += `  <text x="${svgWidth/2}" y="30" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#000">配色方案: ${schemeName}</text>\n`;
         svgContent += `</svg>`;
         
         const blob = new Blob([svgContent], { type: 'image/svg+xml' });
@@ -3888,6 +3928,186 @@ function initColorTool() {
         setTimeout(() => {
             colorToolStatus.textContent = '就绪';
         }, 2000);
+    });
+    
+    // 图片上传处理
+    function loadImageForExtraction(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            colorToolStatus.textContent = '请选择有效的图片文件';
+            setTimeout(() => { colorToolStatus.textContent = '就绪'; }, 2000);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                uploadedImage = img;
+                colorPreviewImg.src = e.target.result;
+                colorImagePreview.style.display = 'flex';
+                colorImagePlaceholder.style.display = 'none';
+                extractColorsBtn.disabled = false;
+                clearImageBtn.disabled = false;
+                colorToolStatus.textContent = '图片已加载，点击"提取配色"获取颜色';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 颜色提取算法
+    function extractColorsFromImage() {
+        if (!uploadedImage) return;
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const maxSize = 100;
+        let w = uploadedImage.width;
+        let h = uploadedImage.height;
+        if (w > h) {
+            if (w > maxSize) {
+                h = Math.round(h * maxSize / w);
+                w = maxSize;
+            }
+        } else {
+            if (h > maxSize) {
+                w = Math.round(w * maxSize / h);
+                h = maxSize;
+            }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(uploadedImage, 0, 0, w, h);
+        
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const pixels = imageData.data;
+        
+        const colorBuckets = {};
+        const bucketSize = 24;
+        
+        for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
+            const a = pixels[i + 3];
+            
+            if (a < 128) continue;
+            
+            const qr = Math.floor(r / bucketSize) * bucketSize;
+            const qg = Math.floor(g / bucketSize) * bucketSize;
+            const qb = Math.floor(b / bucketSize) * bucketSize;
+            
+            const key = `${qr},${qg},${qb}`;
+            if (!colorBuckets[key]) {
+                colorBuckets[key] = { r: 0, g: 0, b: 0, count: 0 };
+            }
+            colorBuckets[key].r += r;
+            colorBuckets[key].g += g;
+            colorBuckets[key].b += b;
+            colorBuckets[key].count++;
+        }
+        
+        const colorArray = Object.values(colorBuckets).map(bucket => ({
+            r: Math.round(bucket.r / bucket.count),
+            g: Math.round(bucket.g / bucket.count),
+            b: Math.round(bucket.b / bucket.count),
+            count: bucket.count
+        })).sort((a, b) => b.count - a.count);
+        
+        const selectedColors = [];
+        const minDistance = 45;
+        
+        for (const color of colorArray) {
+            if (selectedColors.length >= colorCount) break;
+            
+            const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
+            if (brightness < 25 || brightness > 240) continue;
+            
+            let isDistinct = true;
+            for (const selected of selectedColors) {
+                const dr = color.r - selected.r;
+                const dg = color.g - selected.g;
+                const db = color.b - selected.b;
+                const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+                if (distance < minDistance) {
+                    isDistinct = false;
+                    break;
+                }
+            }
+            
+            if (isDistinct) {
+                selectedColors.push({ r: color.r, g: color.g, b: color.b });
+            }
+        }
+        
+        extractedImageColors = selectedColors;
+        
+        if (selectedColors.length > 0) {
+            currentColor = selectedColors[0];
+            updateColorDisplay();
+        }
+        
+        colorSchemeSelect.value = 'from-image';
+        updateColorScheme();
+        
+        colorToolStatus.textContent = `提取了 ${selectedColors.length} 种颜色`;
+        setTimeout(() => { colorToolStatus.textContent = '就绪'; }, 2000);
+    }
+
+    // 点击上传区域
+    colorImageUpload.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+            colorImageInput.click();
+        }
+    });
+
+    // 文件选择
+    colorImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            loadImageForExtraction(file);
+        }
+    });
+
+    // 拖拽支持
+    colorImageUpload.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        colorImageUpload.classList.add('dragover');
+    });
+
+    colorImageUpload.addEventListener('dragleave', () => {
+        colorImageUpload.classList.remove('dragover');
+    });
+
+    colorImageUpload.addEventListener('drop', (e) => {
+        e.preventDefault();
+        colorImageUpload.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            loadImageForExtraction(file);
+        }
+    });
+
+    // 提取配色按钮
+    extractColorsBtn.addEventListener('click', extractColorsFromImage);
+
+    // 清除按钮
+    clearImageBtn.addEventListener('click', () => {
+        uploadedImage = null;
+        extractedImageColors = [];
+        colorImageInput.value = '';
+        colorImagePreview.style.display = 'none';
+        colorImagePlaceholder.style.display = 'flex';
+        extractColorsBtn.disabled = true;
+        clearImageBtn.disabled = true;
+        
+        if (colorSchemeSelect.value === 'from-image') {
+            colorSchemeSelect.value = 'complementary';
+            updateColorScheme();
+        }
+        colorToolStatus.textContent = '已清除图片';
+        setTimeout(() => { colorToolStatus.textContent = '就绪'; }, 2000);
     });
     
     // 初始化

@@ -225,7 +225,7 @@
                     <!-- 左侧：色轮和颜色输入 -->
                     <div class="color-tool-left">
                         <div class="color-wheel-container">
-                            <canvas id="colorWheelCanvas" width="240" height="240"></canvas>
+                            <canvas id="colorWheelCanvas" width="180" height="180"></canvas>
                             <div id="colorWheelMarker" class="color-wheel-marker"></div>
                         </div>
                         
@@ -255,6 +255,24 @@
                                 <input type="number" id="hslLInput" min="0" max="100" placeholder="60">
                             </div>
                         </div>
+                        
+                        <div class="color-image-section">
+                            <div class="control-label">从图片提取配色</div>
+                            <div class="color-image-upload" id="colorImageUpload">
+                                <input type="file" id="colorImageInput" accept="image/*" style="display: none;">
+                                <div class="color-image-preview" id="colorImagePreview" style="display: none;">
+                                    <img id="colorPreviewImg" alt="预览">
+                                </div>
+                                <div class="color-image-placeholder" id="colorImagePlaceholder">
+                                    <div class="upload-icon-small">📷</div>
+                                    <div class="upload-text-small">点击或拖拽图片<br>提取主要颜色</div>
+                                </div>
+                            </div>
+                            <div class="button-area">
+                                <button class="button" id="extractColorsBtn" disabled>提取配色</button>
+                                <button class="button" id="clearImageBtn" disabled>清除</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- 右侧：配色方案 -->
@@ -262,12 +280,13 @@
                         <div class="color-scheme-selector">
                             <label>配色方案：</label>
                             <select id="colorSchemeSelect" class="format-select">
-                                <option value="complementary">互补色</option>
+                                <option value="complementary" selected>互补色</option>
                                 <option value="triadic">对比色（三元）</option>
                                 <option value="analogous">类似色</option>
                                 <option value="split-complementary">分裂互补</option>
                                 <option value="tetradic">矩形/四色</option>
                                 <option value="monochromatic">单色</option>
+                                <option value="from-image">从图片提取</option>
                             </select>
                         </div>
                         
